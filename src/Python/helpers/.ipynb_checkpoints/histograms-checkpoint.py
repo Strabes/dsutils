@@ -376,7 +376,6 @@ def numericHistogram(
         x = x,
         oth_columns = line_columns,
         max_levels = max_levels,
-        oth_val = oth_val,
         stat = stat,
         **kwargs)
     p = plotBar(p,
@@ -432,7 +431,7 @@ def categoricalHistogram(
     p = _categoricalHistogram(
         df,
         x = x,
-        oth_colums = line_columns,
+        oth_columns = line_columns,
         max_levels = max_levels,
         oth_val = oth_val,
         stat = stat,
