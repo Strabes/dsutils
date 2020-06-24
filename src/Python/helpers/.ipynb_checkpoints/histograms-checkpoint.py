@@ -133,8 +133,8 @@ def plotBar(p,
             **kwargs):
     '''
     Function for creating a bar plot for categorical data.
-    If input pandas DataFrame include a column with name 'response',
-    this function also plots a line with these values.
+    If input pandas DataFrame includes columns that should be plotted as
+    lines, the names of these columns can be passed in 'line_columns'
     By passing a matplotlib figure, 'fig', and axis object, 'ax',
     this function can add the plot to the provided axis
     
