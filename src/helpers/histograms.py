@@ -133,8 +133,8 @@ def plotBar(p,
             **kwargs):
     '''
     Function for creating a bar plot for categorical data.
-    If input pandas DataFrame include a column with name 'response',
-    this function also plots a line with these values.
+    If input pandas DataFrame includes columns that should be plotted as
+    lines, the names of these columns can be passed in 'line_columns'
     By passing a matplotlib figure, 'fig', and axis object, 'ax',
     this function can add the plot to the provided axis
     
@@ -443,3 +443,77 @@ def categoricalHistogram(
             line_colors = line_colors,
             **kwargs)
     return(p)
+    
+    
+def categoricalHeatmap(
+    df,
+    x,
+    y,
+    stat = 'size',
+    fillna = 'MISSING',
+    width_ratios = [3,1],
+    height_ratios = [1,3]):
+    
+    """
+    Function for creating bivariate categorical heatmap
+    
+    Parameters
+    -------------------------------
+    df : pandas DataFrame object
+    
+    x : categorical variable in 'df' to plot along the x-axis
+    
+    y : categorical variable in 'df' to plot along the y-axis
+    
+    stat : aggregate function to apply to df after grouping by 'x' and 'y'
+    
+    fillna : string to fill numpy NaNs with
+    
+    width_ratios : ratio of the width of the heatmap to the 'y' marginal plot
+    
+    height_ratios : ratio of the height of the 'x' marginal plot to the heatmap
+    
+    Returns
+    -------------------------------
+    fig : a matplotlib figure
+    """
+    
+    df2 = df.fillna({x:fillna,y:fillna}).groupby([x,y]).agg(stat).unstack(0)
+    
+    fig, axes = plt.subplots(
+    nrows = 2,
+    ncols = 2,
+    sharex = 'col',
+    sharey = 'row',
+    constrained_layout=True,
+    gridspec_kw = {
+        'width_ratios' : width_ratios,
+        'height_ratios' : height_ratios}
+    )
+
+    heatmap = axes[1,0].imshow(df2,aspect='auto',cmap = 'hot');
+
+    axes[1,0].set_xticks(range(len(df2.columns.tolist())));
+    axes[1,0].set_xticklabels(df2.columns.tolist(),rotation=45, ha='right');
+    axes[1,0].set_xlabel(x);
+    axes[1,0].set_yticks(range(len(df2.index.tolist())));
+    axes[1,0].set_yticklabels(df2.index.tolist());
+    axes[1,0].set_ylabel(y);
+
+    dfx = df.groupby(x).size();
+    axes[0,0].bar(range(len(dfx.index.tolist())),dfx.values);
+
+
+    dfy = df.groupby(y).size();
+    axes[1,1].barh(range(len(dfy.index.tolist())),dfy.values);
+
+    axes[0,1].axis('off');
+
+    for ax in [axes[0,0], axes[1,1]]:
+        for s in ['bottom','top','left','right']:
+            ax.spines[s].set_visible(False);
+
+    axes[1,0].spines['top'].set_visible(False);
+    axes[1,0].spines['right'].set_visible(False);
+    plt.colorbar(heatmap);
+    return(fig)
