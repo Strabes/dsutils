@@ -6,8 +6,6 @@
 Welcome to dsutils's documentation!
 ===================================
 
-dsutils is a python package of data science utilities.
-
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
