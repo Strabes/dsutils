@@ -40,14 +40,29 @@ def numericVarCutpoints(
         c_final : numpy 1-D array of final cut points
         c_format : list of aesthetically-pleasing cut point labels
     '''
+    
+    def log_spcl(x):
+        if x == 0:
+            return(0)
+        else:
+            return(math.log(abs(x),10))
+    
     # Create lower bound:
     lb = np.min(x)
-    lb_ordOfMag = int(np.floor(math.log(abs(lb),10)))
+    if lb == 0:
+        lb_ordOfMag = 0
+    else:
+        lb_ordOfMag = int(np.floor(log_spcl(lb)))
     lb = np.floor(lb * 10**(sigFig - 1 - lb_ordOfMag)) / 10**(sigFig - 1 - lb_ordOfMag)
     # Create upper bound:
     ub = np.max(x)
-    ub_ordOfMag = int(np.floor(math.log(abs(ub),10)))
+    if ub == 0:
+        ub_ordOfMag = 0
+    else:
+        ub_ordOfMag = int(np.floor(log_spcl(ub)))
     ub = np.ceil(ub * 10**(sigFig - 1 - ub_ordOfMag)) / 10**(sigFig - 1 - ub_ordOfMag)
+    
+    # Apply quantile cutoffs if provided:
     if (qntlCutoff is not None and
             len(qntlCutoff) == 2 and
             isinstance(qntlCutoff[0],float) and
@@ -55,6 +70,8 @@ def numericVarCutpoints(
         ep = np.quantile(x, qntlCutoff)
     else:
         ep = np.array([lb,ub])
+        
+    # Create cut points
     if isinstance(cuts,str):
         if cuts == 'linear':
             c = np.linspace(ep[0],ep[1],num = ncuts)
@@ -73,12 +90,9 @@ def numericVarCutpoints(
     # add far endpoints to c:
     c = np.unique(np.append(np.append(lb,c),ub))
     # round/format values in c:
-    c_abs = abs(c)
-    c_ordOfMag = np.array([int(np.floor(math.log(i,10))) for i in c_abs])
+    c_ordOfMag = np.array([int(np.floor(log_spcl(i))) for i in c])
     c_log_rnd = np.round(c / 10.0**c_ordOfMag,2)
     c_final = np.unique(c_log_rnd * (10.0**c_ordOfMag))
-    units = ['', 'K', 'M', 'G', 'T', 'P']
-    #c_format = ['%.2f%s' % (i, units[j]) for i,j in zip(c_log_rnd,c_ordOfMag//4)]
     c_format = [humanReadableNum(i, sigFig = sigFig) for i in c_final]
     return([c_final,c_format])
     
@@ -98,7 +112,9 @@ def humanReadableNum(number,sigFig = 3):
     -----------------------------------------------------
     z : number formatted as str
     '''
-    if np.abs(number) < 1:
+    if number == 0:
+        z = '0'
+    elif np.abs(number) < 1:
         magnitude = int(math.floor(math.log(np.abs(number), 10)))
         # if |number| >= 0.01
         if magnitude >= -2:
@@ -254,7 +270,8 @@ def _numericHistogram(
     stats['Count'] = 'sum'
     p = (
         df[[*oth_columns,x]].copy()
-        .assign(**{x_grp: lambda z: pd.cut(z.loc[:,x].values,f[0],labels=labels)})
+        .assign(**{x_grp:
+                   lambda z: pd.cut(z.loc[:,x].values,f[0],labels=labels,include_lowest=True)})
         .replace({x_grp:{np.nan:'MISSING'}})
         .assign(Count = 1)
         .groupby(x_grp)
@@ -443,3 +460,77 @@ def categoricalHistogram(
             line_colors = line_colors,
             **kwargs)
     return(p)
+    
+    
+def categoricalHeatmap(
+    df,
+    x,
+    y,
+    stat = 'size',
+    fillna = 'MISSING',
+    width_ratios = [3,1],
+    height_ratios = [1,3]):
+    
+    """
+    Function for creating bivariate categorical heatmap
+    
+    Parameters
+    -------------------------------
+    df : pandas DataFrame object
+    
+    x : categorical variable in 'df' to plot along the x-axis
+    
+    y : categorical variable in 'df' to plot along the y-axis
+    
+    stat : aggregate function to apply to df after grouping by 'x' and 'y'
+    
+    fillna : string to fill numpy NaNs with
+    
+    width_ratios : ratio of the width of the heatmap to the 'y' marginal plot
+    
+    height_ratios : ratio of the height of the 'x' marginal plot to the heatmap
+    
+    Returns
+    -------------------------------
+    fig : a matplotlib figure
+    """
+    
+    df2 = df.fillna({x:fillna,y:fillna}).groupby([x,y]).agg(stat).unstack(0)
+    
+    fig, axes = plt.subplots(
+    nrows = 2,
+    ncols = 2,
+    sharex = 'col',
+    sharey = 'row',
+    constrained_layout=True,
+    gridspec_kw = {
+        'width_ratios' : width_ratios,
+        'height_ratios' : height_ratios}
+    )
+
+    heatmap = axes[1,0].imshow(df2,aspect='auto',cmap = 'hot');
+
+    axes[1,0].set_xticks(range(len(df2.columns.tolist())));
+    axes[1,0].set_xticklabels(df2.columns.tolist(),rotation=45, ha='right');
+    axes[1,0].set_xlabel(x);
+    axes[1,0].set_yticks(range(len(df2.index.tolist())));
+    axes[1,0].set_yticklabels(df2.index.tolist());
+    axes[1,0].set_ylabel(y);
+
+    dfx = df.groupby(x).size();
+    axes[0,0].bar(range(len(dfx.index.tolist())),dfx.values);
+
+
+    dfy = df.groupby(y).size();
+    axes[1,1].barh(range(len(dfy.index.tolist())),dfy.values);
+
+    axes[0,1].axis('off');
+
+    for ax in [axes[0,0], axes[1,1]]:
+        for s in ['bottom','top','left','right']:
+            ax.spines[s].set_visible(False);
+
+    axes[1,0].spines['top'].set_visible(False);
+    axes[1,0].spines['right'].set_visible(False);
+    plt.colorbar(heatmap);
+    return(fig)

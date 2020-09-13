@@ -40,14 +40,29 @@ def numericVarCutpoints(
         c_final : numpy 1-D array of final cut points
         c_format : list of aesthetically-pleasing cut point labels
     '''
+    
+    def log_spcl(x):
+        if x == 0:
+            return(0)
+        else:
+            return(math.log(abs(x),10))
+    
     # Create lower bound:
     lb = np.min(x)
-    lb_ordOfMag = int(np.floor(math.log(abs(lb),10)))
+    if lb == 0:
+        lb_ordOfMag = 0
+    else:
+        lb_ordOfMag = int(np.floor(log_spcl(lb)))
     lb = np.floor(lb * 10**(sigFig - 1 - lb_ordOfMag)) / 10**(sigFig - 1 - lb_ordOfMag)
     # Create upper bound:
     ub = np.max(x)
-    ub_ordOfMag = int(np.floor(math.log(abs(ub),10)))
+    if ub == 0:
+        ub_ordOfMag = 0
+    else:
+        ub_ordOfMag = int(np.floor(log_spcl(ub)))
     ub = np.ceil(ub * 10**(sigFig - 1 - ub_ordOfMag)) / 10**(sigFig - 1 - ub_ordOfMag)
+    
+    # Apply quantile cutoffs if provided:
     if (qntlCutoff is not None and
             len(qntlCutoff) == 2 and
             isinstance(qntlCutoff[0],float) and
@@ -55,6 +70,8 @@ def numericVarCutpoints(
         ep = np.quantile(x, qntlCutoff)
     else:
         ep = np.array([lb,ub])
+        
+    # Create cut points
     if isinstance(cuts,str):
         if cuts == 'linear':
             c = np.linspace(ep[0],ep[1],num = ncuts)
@@ -73,12 +90,9 @@ def numericVarCutpoints(
     # add far endpoints to c:
     c = np.unique(np.append(np.append(lb,c),ub))
     # round/format values in c:
-    c_abs = abs(c)
-    c_ordOfMag = np.array([int(np.floor(math.log(i,10))) for i in c_abs])
+    c_ordOfMag = np.array([int(np.floor(log_spcl(i))) for i in c])
     c_log_rnd = np.round(c / 10.0**c_ordOfMag,2)
     c_final = np.unique(c_log_rnd * (10.0**c_ordOfMag))
-    units = ['', 'K', 'M', 'G', 'T', 'P']
-    #c_format = ['%.2f%s' % (i, units[j]) for i,j in zip(c_log_rnd,c_ordOfMag//4)]
     c_format = [humanReadableNum(i, sigFig = sigFig) for i in c_final]
     return([c_final,c_format])
     
@@ -98,7 +112,9 @@ def humanReadableNum(number,sigFig = 3):
     -----------------------------------------------------
     z : number formatted as str
     '''
-    if np.abs(number) < 1:
+    if number == 0:
+        z = '0'
+    elif np.abs(number) < 1:
         magnitude = int(math.floor(math.log(np.abs(number), 10)))
         # if |number| >= 0.01
         if magnitude >= -2:
@@ -254,7 +270,8 @@ def _numericHistogram(
     stats['Count'] = 'sum'
     p = (
         df[[*oth_columns,x]].copy()
-        .assign(**{x_grp: lambda z: pd.cut(z.loc[:,x].values,f[0],labels=labels)})
+        .assign(**{x_grp:
+                   lambda z: pd.cut(z.loc[:,x].values,f[0],labels=labels,include_lowest=True)})
         .replace({x_grp:{np.nan:'MISSING'}})
         .assign(Count = 1)
         .groupby(x_grp)
