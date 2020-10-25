@@ -24,4 +24,4 @@ jobs:
 
       # Runs a single command using the runners shell
       - name: Run a one-line script
-        run: cp -a docs/build/html/. docs/
+        run: cp -a docs/build/html/* docs/
