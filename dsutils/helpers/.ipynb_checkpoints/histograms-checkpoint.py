@@ -24,9 +24,10 @@ def numericVarCutpoints(
         and the qntlCutoff[1] quantile. If qntlCutoff is None then do not
         ignore outliers
         
-    cuts: 'linear', 'log', 'quantile'
+    cuts: 'linear', 'log', 'logp1', 'quantile'
         'linear' : equally spaced cutpoints
         'log' : logarithmically spaced cutpoints
+        'logp1' : logarithmically spaced cutpoints after adding 1
         'quantile' : cutpoints corresponding to equally spaced quantiles
         
     ncut : number of cutpoints
@@ -76,13 +77,25 @@ def numericVarCutpoints(
         if cuts == 'linear':
             c = np.linspace(ep[0],ep[1],num = ncuts)
         elif cuts == 'log':
+            if ep[0] == 0 or ep[1] == 0:
+                msg = "Variable range includes zero when using 'log'" +
+                      " - consider using 'logp1' instead"
+                raise ValueError(msg)
+            else:
+                c = 10**np.linspace(
+                    np.sign(ep[0])*math.log(abs(ep[0]),10),
+                    np.sign(ep[1])*math.log(abs(ep[1]),10),
+                    num = ncuts
+                    )
+        elif cuts == 'logp1':
             c = 10**np.linspace(
-                np.sign(ep[0])*math.log(abs(ep[0]),10),
-                np.sign(ep[1])*math.log(abs(ep[1]),10),
+                np.sign(ep[0])*math.log(abs(ep[0]) + 1,10),
+                np.sign(ep[1])*math.log(abs(ep[1]) + 1,10),
                 num = ncuts
                 )
+            c = np.sort(np.unique(np.append(0,c)))
         elif cuts == 'quantile':
-            c = np.quantile(x,np.linspace(0,1,10))
+            c = np.quantile(x,np.linspace(0,1,ncuts))
     else:
         # cuts are the actual cut points themselves
         c = cuts
@@ -91,7 +104,7 @@ def numericVarCutpoints(
     c = np.unique(np.append(np.append(lb,c),ub))
     # round/format values in c:
     c_ordOfMag = np.array([int(np.floor(log_spcl(i))) for i in c])
-    c_log_rnd = np.round(c / 10.0**c_ordOfMag,2)
+    c_log_rnd = np.round(c / 10.0**c_ordOfMag,sigFig - 1)
     c_final = np.unique(c_log_rnd * (10.0**c_ordOfMag))
     c_format = [humanReadableNum(i, sigFig = sigFig) for i in c_final]
     return([c_final,c_format])
@@ -217,6 +230,62 @@ def plotBar(p,
     return(fig)
 
 
+def cutter(df, x, max_levels = 20, **kwargs):
+    """
+    Cut a numeric variable into bins
+    
+    Parameters
+    --------------------------
+    df : pandas DataFrame object
+    
+    x : the name of the numeric variable in 'df' to construct bins from
+    
+    max_levels : maximum number of bins to create from 'x'
+    
+    Returns
+    ---------------------------
+    z : binned values
+    """
+    x_no_nan = ~np.isnan(df.loc[:,x].values)
+    f = numericVarCutpoints(df.loc[x_no_nan,x].values,**kwargs)
+    labels = [(
+        str(i+1).zfill(2) +
+        ': ' +
+        f[1][i] +
+        ' - ' +
+        f[1][i+1]) for i in range(len(f[1])-1)]
+    
+    z = pd.cut(df.loc[:,x].values,f[0],labels=labels,include_lowest=True)
+    
+    return(z)
+
+
+def binner(df, x, new_col, fill_nan = None, max_levels = 20, **kwargs):
+    """
+    Bin a numeric variable
+    
+    Parameters
+    --------------------------
+    df : pandas DataFrame object
+    
+    x : the name of the numeric variable in 'df' to construct bins from
+    
+    new_col : str to use as the name of the binned variable
+    
+    fill_nan : string to fill nan values
+    
+    max_levels : maximum number of bins to create from 'x'
+    
+    Returns
+    ---------------------------
+    df_ : pandas DataFrame including new binned column
+    """
+    df_ = df.copy().assign(**{new_col : lambda z: cutter(z,x,max_levels,**kwargs)})
+    if fill_na is not None:
+        df_.replace({new_col:{np.nan:fill_na}})
+    return(df_)
+
+
 def _numericHistogram(
     df,
     x = 'x',
@@ -252,15 +321,6 @@ def _numericHistogram(
     elif isinstance(oth_columns,str):
         oth_columns = [oth_columns]
     
-    x_no_nan = ~np.isnan(df.loc[:,x].values)
-    f = numericVarCutpoints(df.loc[x_no_nan,x].values,**kwargs)
-    labels = [(
-        str(i+1).zfill(2) +
-        ': ' +
-        f[1][i] +
-        ' - ' +
-        f[1][i+1]) for i in range(len(f[1])-1)]
-    
     x_grp = x + ' _GROUPED_'
     
     if len(oth_columns) > 0:
@@ -270,8 +330,7 @@ def _numericHistogram(
     stats['Count'] = 'sum'
     p = (
         df[[*oth_columns,x]].copy()
-        .assign(**{x_grp:
-                   lambda z: pd.cut(z.loc[:,x].values,f[0],labels=labels,include_lowest=True)})
+        .assign(**{x_grp: lambda z: cutter(z,x,max_levels,**kwargs)})
         .replace({x_grp:{np.nan:'MISSING'}})
         .assign(Count = 1)
         .groupby(x_grp)
@@ -281,7 +340,6 @@ def _numericHistogram(
         )
 
     return(p)
-
 
 def _categoricalHistogram(
     df,
