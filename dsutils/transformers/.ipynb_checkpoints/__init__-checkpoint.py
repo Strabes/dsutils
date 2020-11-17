@@ -6,6 +6,7 @@ from ._categorical_binners import PercentThresholdBinner
 from ._categorical_binners import CumulativePercentThresholdBinner
 
 from ._missing_transformers import BaseMissingTransformer
+from ._missing_transformers import MissingIndicator
 from ._missing_transformers import ReplaceMissingMean
 from ._missing_transformers import ReplaceMissingMedian
 from ._missing_transformers import ReplaceMissingNumericConstant
@@ -18,6 +19,7 @@ __all__ = [
     'PercentThresholdBinner',
     'CumulativePercentThresholdBinner',
     'BaseMissingTransformer',
+    'MissingIndicator',
     'ReplaceMissingMean',
     'ReplaceMissingMedian',
     'ReplaceMissingNumericConstant',

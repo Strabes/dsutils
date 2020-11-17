@@ -43,3 +43,7 @@ class Pipeline:
         for step in self._steps:
             step_input = self._transform_step(step, step_input)
         return(step_input)
+    
+    def fit_transform(self, df):
+        self.fit(df)
+        return(self.transform(df))

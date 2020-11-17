@@ -3,6 +3,28 @@ import numpy as np
 from typing import Union
 from ._base import BaseTransformer
 
+
+class MissingIndicator(BaseTransformer):
+    def __init__(self):
+        super(MissingIndicator, self).__init__()
+        
+    def fit(self, df, x: Union[str,list], postfix = "_NA_IND"):
+        if self._fitted: return
+        if isinstance(x,str): x = [x]
+        self._x = x
+        self._postfix = postfix
+        self._fitted = True
+        
+    def transform(self, df, in_place = False):
+        if not self._fitted:
+            raise Exception("Transformation not fit yet")
+        if not in_place:
+            df = df.copy()
+        postfix = self._postfix
+        for z in self._x:
+            df[z + postfix] = df[z].isna().astype(int)
+        if not in_place: return(df)
+
 class BaseMissingTransformer(BaseTransformer):
     
     def __init__(self):
@@ -17,10 +39,6 @@ class BaseMissingTransformer(BaseTransformer):
         for z in self._x:
             df.loc[df[z].isna(),z] = self.fillna[z]
         if not in_place: return(df)
-        
-    def fit_transform(self, df, in_place = False):
-        self.fit(df)
-        self.transform(df, in_place)
 
         
 class ReplaceMissingMean(BaseMissingTransformer):

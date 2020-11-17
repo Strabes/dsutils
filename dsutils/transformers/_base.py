@@ -21,6 +21,13 @@ class BaseTransformer:
         else:
             for z in x:
                 self._validate_one(df, z, dtypes)
+                
+    def fit_transform(self, df, in_place = False):
+        self.fit(df)
+        if in_place:
+            self.transform(df, in_place)
+        else:
+            return(self.transform(df, in_place))
         
     def _validate_one(self, df, x, dtypes):
         if not x in df.columns:

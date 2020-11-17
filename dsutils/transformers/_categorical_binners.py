@@ -22,9 +22,9 @@ class _CategoricalBinner(BaseTransformer):
                 .map(self._map).fillna(self._other_val)
         if not in_place: return(df)
         
-    def fit_transform(self, df, in_place = False):
-        self.fit(df)
-        self.transform(df, in_place)
+#     def fit_transform(self, df, in_place = False):
+#         self.fit(df)
+#         self.transform(df, in_place)
 
         
 class MaxLevelBinner(_CategoricalBinner):
