@@ -78,7 +78,7 @@ def numericVarCutpoints(
             c = np.linspace(ep[0],ep[1],num = ncuts)
         elif cuts == 'log':
             if ep[0] == 0 or ep[1] == 0:
-                msg = "Variable range includes zero when using 'log'" +
+                msg = "Variable range includes zero when using 'log'" + \
                       " - consider using 'logp1' instead"
                 raise ValueError(msg)
             else:
