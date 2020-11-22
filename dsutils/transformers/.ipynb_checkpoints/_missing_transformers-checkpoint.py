@@ -5,14 +5,12 @@ from ._base import BaseTransformer
 
 
 class MissingIndicator(BaseTransformer):
-    def __init__(self):
-        super(MissingIndicator, self).__init__()
-        
-    def fit(self, df, x: Union[str,list], postfix = "_NA_IND"):
-        if self._fitted: return
-        if isinstance(x,str): x = [x]
-        self._x = x
+    def __init__(self, x: Union[str,list], postfix = "_NA_IND"):
+        super(MissingIndicator, self).__init__(x)
         self._postfix = postfix
+        
+    def fit(self, df):
+        if self._fitted: return
         self._fitted = True
         
     def transform(self, df, in_place = False):
@@ -27,8 +25,8 @@ class MissingIndicator(BaseTransformer):
 
 class BaseMissingTransformer(BaseTransformer):
     
-    def __init__(self):
-        super(BaseMissingTransformer, self).__init__()
+    def __init__(self, x: Union[str,list]):
+        super(BaseMissingTransformer, self).__init__(x)
         self.fillna = {}
         
     def transform(self, df, in_place = False):
@@ -43,40 +41,34 @@ class BaseMissingTransformer(BaseTransformer):
         
 class ReplaceMissingMean(BaseMissingTransformer):
     
-    def __init__(self):
-        super(ReplaceMissingMean, self).__init__()
+    def __init__(self,x: Union[str,list]):
+        super(ReplaceMissingMean, self).__init__(x)
         
-    def fit(self, df, x: Union[str,list]):
+    def fit(self, df):
         if self._fitted: return
-        if isinstance(x,str): x = [x]
-        self._x = x
         for z in self._x:
             self.fillna[z] = df.loc[-df[z].isna(),z].mean()
         self._fitted = True
             
 class ReplaceMissingMedian(BaseMissingTransformer):
     
-    def __init__(self):
-        super(ReplaceMissingMedian, self).__init__()
+    def __init__(self, x: Union[str,list]):
+        super(ReplaceMissingMedian, self).__init__(x)
         
-    def fit(self, df, x: Union[str,list]):
+    def fit(self, df):
         if self._fitted: return
-        if isinstance(x,str): x = [x]
-        self._x = x
         for z in self._x:
             self.fillna[z] = df.loc[-df[z].isna(),z].median()
         self._fitted = True
             
 class ReplaceMissingNumericConstant(BaseMissingTransformer):
     
-    def __init__(self, constant: Union[float,dict] = 0):
-        super(ReplaceMissingNumericConstant, self).__init__()
+    def __init__(self, x: Union[str,list], constant: Union[float,dict] = 0):
+        super(ReplaceMissingNumericConstant, self).__init__(x)
         self.constant = constant
         
-    def fit(self, df, x: Union[str,list]):
+    def fit(self, df):
         if self._fitted: return
-        if isinstance(x,str): x = [x]
-        self._x = x
         for z in self._x:
             if isinstance(self.constant,dict):
                 self.fillna[z] = self.constant[z]
@@ -86,14 +78,12 @@ class ReplaceMissingNumericConstant(BaseMissingTransformer):
 
 class ReplaceMissingCategorical(BaseMissingTransformer):
     
-    def __init__(self, constant: Union[str,dict] = "_MISSING_"):
-        super(ReplaceMissingCategorical, self).__init__()
+    def __init__(self, x: Union[str,list], constant: Union[str,dict] = "_MISSING_"):
+        super(ReplaceMissingCategorical, self).__init__(x)
         self.constant = constant
         
-    def fit(self, df, x: Union[str,list]):
+    def fit(self, df):
         if self._fitted: return
-        if isinstance(x,str): x = [x]
-        self._x = x
         for z in self._x:
             if isinstance(self.constant, dict):
                 self.fillna[z] = self.constant[z]

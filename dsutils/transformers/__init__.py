@@ -12,6 +12,8 @@ from ._missing_transformers import ReplaceMissingMedian
 from ._missing_transformers import ReplaceMissingNumericConstant
 from ._missing_transformers import ReplaceMissingCategorical
 
+from ._date_transformers import DateComponents
+
 __all__ = [
     'BaseTransformer',
     '_CategoricalBinner',
@@ -23,5 +25,6 @@ __all__ = [
     'ReplaceMissingMean',
     'ReplaceMissingMedian',
     'ReplaceMissingNumericConstant',
-    'ReplaceMissingCategorical'
+    'ReplaceMissingCategorical',
+    'DateComponents'
 ]

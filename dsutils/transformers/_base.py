@@ -1,12 +1,15 @@
 import numpy as np
 import pandas as pd
+from typing import Union
 
 class BaseTransformer:
     """
     Base class for all transformers
     """
     
-    def __init__(self):
+    def __init__(self,x: Union[str,list]):
+        if isinstance(x,str): x = [x]
+        self._x = x
         self._fitted = False
         
     def _reset(self):

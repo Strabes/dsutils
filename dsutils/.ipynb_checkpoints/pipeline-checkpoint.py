@@ -22,9 +22,9 @@ class Pipeline:
                   "'fit', 'transform' or " + \
                   "'fit_transform' methods"
             raise ValueError(msg)
-        if not type(step[2]) in [str,list]:
-            msg = "Step needs to have column names to use"
-            raise ValueError(msg)
+#         if not type(step[2]) in [str,list]:
+#             msg = "Step needs to have column names to use"
+#             raise ValueError(msg)
             
     def fit(self, df):
         step_input = df
@@ -33,7 +33,8 @@ class Pipeline:
             step_input = self._transform_step(step,step_input)
             
     def _fit_step(self,step,step_input):
-        step[1].fit(step_input,step[2])
+        #step[1].fit(step_input,step[2])
+        step[1].fit(step_input)
         
     def _transform_step(self,step,step_input):
         return(step[1].transform(step_input))
