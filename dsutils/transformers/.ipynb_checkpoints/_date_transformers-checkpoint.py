@@ -5,7 +5,8 @@ from ._base import BaseTransformer
 
 class DateComponents(BaseTransformer):
 
-    def __init__(self, x : Union[str,list], components = {'year':'_YEAR','month':'_MONTH','day':'_DAY'}):
+    def __init__(self, x : Union[str,list],
+                 components = {'year':'_YEAR','month':'_MONTH','day':'_DAY'}):
         super(DateComponents, self).__init__(x)
         self._components = components
         

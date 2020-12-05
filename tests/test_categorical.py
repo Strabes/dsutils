@@ -2,7 +2,7 @@ import pytest
 import pandas as pd
 import numpy as np
 
-from ..transformers._categorical_binners import *
+from dsutils.transformers._categorical_binners import *
 
 @pytest.fixture
 def example_data():
