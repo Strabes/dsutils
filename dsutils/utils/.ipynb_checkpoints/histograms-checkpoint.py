@@ -159,6 +159,7 @@ def plotBar(p,
             line_columns = None,
             bar_color = 'xkcd:light blue',
             line_colors = ['xkcd:red','orange','b','y','g','c','m'],
+            bar = 'count',
             **kwargs):
     '''
     Function for creating a bar plot for categorical data.
@@ -182,6 +183,8 @@ def plotBar(p,
     
     line_colors : colors for the lines, must be recognized by matplotlib
     
+    bar: 'count' or 'percent'
+    
     **kwargs : optional parameters:
         fig : a matplotlib figure
         ax : a matplotlib axis object
@@ -197,6 +200,11 @@ def plotBar(p,
         ax = plt.gca()
         
     n = p.shape[0]
+    if bar == 'count': _stat = 'Count'
+    elif bar == 'percent':
+        p['Percent'] = p.Count / sum(p.Count)
+        _stat = 'Percent'
+        
     _ = ax.bar(
         range(n),
         p.loc[:,'Count'],
@@ -473,6 +481,7 @@ def numericHistogram(
         stat = stat,
         binner = binner,
         **kwargs)
+    
     p = plotBar(p,
             x = x,
             line_columns = line_columns,
