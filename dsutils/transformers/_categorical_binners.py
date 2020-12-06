@@ -9,7 +9,7 @@ class _CategoricalBinner(BaseTransformer):
     """
     def __init__(self, x = Union[str,list]):
         super(_CategoricalBinner, self).__init__(x)
-        self._map = None
+        self._map = {}
         self._other_val = None
         
     def transform(self, df, in_place = False):
@@ -19,12 +19,8 @@ class _CategoricalBinner(BaseTransformer):
             df = df.copy()
         for z in self._x:
             df.loc[-df[z].isna(),z] = df.loc[-df[z].isna(),z] \
-                .map(self._map).fillna(self._other_val)
+                .map(self._map[z]).fillna(self._other_val)
         if not in_place: return(df)
-        
-#     def fit_transform(self, df, in_place = False):
-#         self.fit(df)
-#         self.transform(df, in_place)
 
         
 class MaxLevelBinner(_CategoricalBinner):
@@ -41,7 +37,7 @@ class MaxLevelBinner(_CategoricalBinner):
                      .sort_values(ascending = False) \
                      .head(self._max_levels)
             levels = cnts.index.tolist()
-            self._map = {l:l for l in levels}
+            self._map[z] = {l:l for l in levels}
         self._fitted = True
 
         
@@ -57,7 +53,7 @@ class PercentThresholdBinner(_CategoricalBinner):
         for z in self._x:
             cnts = (df.groupby(z).size() / df.shape[0])
             levels = cnts[cnts>=self._percent_threshold].index.tolist()
-            self._map = {l:l for l in levels}
+            self._map[z] = {l:l for l in levels}
         self._fitted = True
         
         
@@ -74,5 +70,5 @@ class CumulativePercentThresholdBinner(_CategoricalBinner):
             cnts = (df.groupby(z).size() / df.shape[0]) \
                       .sort_values(ascending=False).cumsum()
             levels = cnts[cnts<=self._cum_percent].index.tolist()
-            self._map = {l:l for l in levels}
+            self._map[z] = {l:l for l in levels}
         self._fitted = True

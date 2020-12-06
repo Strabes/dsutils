@@ -18,5 +18,10 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
+    install_requires = [
+        "numpy>=1",
+        "pandas>=1",
+        "matplotlib>=3"
+    ],
     python_requires='>=3.6',
 )

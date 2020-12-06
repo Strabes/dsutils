@@ -159,6 +159,7 @@ def plotBar(p,
             line_columns = None,
             bar_color = 'xkcd:light blue',
             line_colors = ['xkcd:red','orange','b','y','g','c','m'],
+            bar = 'count',
             **kwargs):
     '''
     Function for creating a bar plot for categorical data.
@@ -182,6 +183,8 @@ def plotBar(p,
     
     line_colors : colors for the lines, must be recognized by matplotlib
     
+    bar: 'count' or 'percent'
+    
     **kwargs : optional parameters:
         fig : a matplotlib figure
         ax : a matplotlib axis object
@@ -197,6 +200,11 @@ def plotBar(p,
         ax = plt.gca()
         
     n = p.shape[0]
+    if bar == 'count': _stat = 'Count'
+    elif bar == 'percent':
+        p['Percent'] = p.Count / sum(p.Count)
+        _stat = 'Percent'
+        
     _ = ax.bar(
         range(n),
         p.loc[:,'Count'],
@@ -292,6 +300,7 @@ def _numericHistogram(
     oth_columns = None,
     max_levels = 20,
     stat = 'mean',
+    binner = True,
     **kwargs):
     '''
     Function for histogramming a numeric column into bins and
@@ -328,16 +337,25 @@ def _numericHistogram(
     else:
         stats = dict()
     stats['Count'] = 'sum'
-    p = (
-        df[[*oth_columns,x]].copy()
-        .assign(**{x_grp: lambda z: cutter(z,x,max_levels,**kwargs)})
-        .replace({x_grp:{np.nan:'MISSING'}})
-        .assign(Count = 1)
-        .groupby(x_grp)
-        .agg(stats)
-        .reset_index()
-        .rename(columns = {x_grp:x})
-        )
+    if binner:
+        p = (
+            df[[*oth_columns,x]].copy()
+            .assign(**{x_grp: lambda z: cutter(z,x,max_levels,**kwargs)})
+            .replace({x_grp:{np.nan:'MISSING'}})
+            .assign(Count = 1)
+            .groupby(x_grp)
+            .agg(stats)
+            .reset_index()
+            .rename(columns = {x_grp:x})
+            )
+    else:
+        p = (
+            df[[*oth_columns,x]].copy()
+            .assign(Count = 1)
+            .groupby(x,dropna=False)
+            .agg(stats)
+            .reset_index()
+            )
 
     return(p)
 
@@ -417,6 +435,7 @@ def numericHistogram(
     bar_color = 'xkcd:light blue',
     line_colors = ['xkcd:red','orange','b','y','g','c','m'],
     stat = 'mean',
+    min_levels = 20,
     **kwargs):
     '''
     Function to create matplotlib histogram plot
@@ -440,19 +459,29 @@ def numericHistogram(
     stat : aggregate statistic to calculate on 'oth_columns' within
         bins of 'x'
         
+    min_levels : if 'x' has more than min_levels distinct level,
+        induce binning
+        
     Returns
     ---------------------------
     p : matplotlib figure
 
     
     '''
+    
+    if len(df[x].unique()) > min_levels:
+        binner = True
+    else:
+        binner = False
     p = _numericHistogram(
         df,
         x = x,
         oth_columns = line_columns,
         max_levels = max_levels,
         stat = stat,
+        binner = binner,
         **kwargs)
+    
     p = plotBar(p,
             x = x,
             line_columns = line_columns,
