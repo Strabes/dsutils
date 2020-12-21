@@ -11,13 +11,6 @@ def example_data():
      'y':np.linspace(-10,-39,50)}
     ))
 
-
-@pytest.fixture
-def example_data_na():
-    return(pd.DataFrame(
-    {'x':['a','a','b','c','b','a',np.nan,'a',np.nan]}
-    ))
-
 def test_outlier_percentile_capper(example_data):
     l = np.quantile(example_data.x.values,0.01)
     h = np.quantile(example_data.x.values,0.99)
@@ -28,5 +21,5 @@ def test_outlier_percentile_capper(example_data):
         'y' : example_data.y.values
         })
     res2 = OutlierPercentileCapper(
-        x='x',percentiles = [0.01,0.99]).fit_transform(example_data)
+        x='x',lower = 0.01, upper = 0.99).fit_transform(example_data)
     assert res.equals(res2)
