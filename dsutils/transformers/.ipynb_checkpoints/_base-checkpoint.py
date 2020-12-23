@@ -26,6 +26,20 @@ class BaseTransformer:
                 self._validate_one(df, z, dtypes)
                 
     def fit_transform(self, df, in_place = False):
+        """
+        Apply fit and transform methods
+        
+        Parameters
+        ----------
+        df : pandas DataFrame
+        in_place : boolean. Apply transformation in place to
+                 DataFrame
+        
+        Returns
+        -------
+        If in_place is False, returns new DataFrame with transformations
+        applied.
+        """
         self.fit(df)
         if in_place:
             self.transform(df, in_place)
