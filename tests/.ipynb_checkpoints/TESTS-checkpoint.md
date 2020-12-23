@@ -1,2 +1,4 @@
 Run tests with command:
->> python -m pytest
+```
+$ python -m pytest
+```
