@@ -49,12 +49,12 @@ def cutpoints(
     '''
     
     # Create lower bound:
-    lb = np.min(x)
+    lb = np.nanmin(x)
     lb_ord_of_mag = _order_of_mag(lb)
     lb_pwr = sig_fig - 1 - lb_ord_of_mag
     lb = np.floor(lb * 10**lb_pwr) / 10**lb_pwr
     # Create upper bound:
-    ub = np.max(x)
+    ub = np.nanmax(x)
     ub_ord_of_mag = _order_of_mag(ub)
     ub_pwr = sig_fig - 1 - ub_ord_of_mag
     ub = np.ceil(ub * 10**ub_pwr) / 10**ub_pwr
@@ -73,7 +73,7 @@ def cutpoints(
         if cuts == 'linear':
             c = np.linspace(ep[0],ep[1],num = ncuts)
         elif cuts == 'log':
-            if ep[0] == 0 or ep[1] == 0:
+            if ep[0] <= 0:
                 msg = "Variable range includes zero when using 'log'" + \
                       " - consider using 'logp1' instead"
                 raise ValueError(msg)
@@ -184,10 +184,7 @@ def cutter(
     
     # pm contains any values that exceed point_mass_threshold
     # pm is 1-D numpy.array
-    cnts = df.groupby(x).size().sort_values(ascending=False)
-    cnts = cnts / cnts.sum()
-    pm = cnts[cnts > point_mass_threshold].index.values
-    pm.sort()
+    pm = _point_mass(df[x], threshold = point_mass_threshold)
     
     if len(pm) == 0:
         # if there are no values exceeding point_mass_threshold
@@ -217,8 +214,7 @@ def cutter(
             # Otherwise, rem has no non-NaN values and
             # we just generate empty cutpoints and formatted numbers
             cps, cps_format = np.array([]), []
-        # Combine pm and c_final
-        # Combine pm_format and c_format
+        # Create point mass formatted list
         pm_format = [human_readable_num(i, sig_fig) for i in pm]
 
     # Construct bin_labels and pm_labels        
@@ -237,11 +233,8 @@ def cutter(
         df.loc[df[x] == v,x + '_BINNED'] = pm_labels[i]
     
     # Construct final labels
-    if len(bin_labels) > 0:
-        final_labels = bin_labels+pm_labels
-        final_labels.sort()
-    else:
-        final_labels = pm_labels
+    final_labels = bin_labels+pm_labels
+    final_labels.sort()
         
     # Apply labels
     z = pd.Categorical(
@@ -332,3 +325,9 @@ def _order_of_mag(x):
     else:
         ord_of_mag = int(np.floor(_log_spcl(x)))
     return(ord_of_mag)
+
+def _point_mass(x, threshold = 0.1):
+    cnts = x.value_counts(normalize=True)
+    v = cnts[cnts > threshold].index.values
+    v.sort()
+    return(v)
