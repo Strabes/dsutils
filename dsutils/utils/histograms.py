@@ -75,9 +75,11 @@ def plotBar(p,
         if isinstance(line_columns,str):
             line_columns = [line_columns]
         for i, col in enumerate(line_columns):
+            #clr = next(prop_iter)['color']
             _ = twinx.plot(
                 range(n),
                 p.loc[:,col],
+                marker = 'o',
                 color = next(prop_iter)['color']
             )
         twinx.spines['top'].set_visible(False)
@@ -157,7 +159,9 @@ def _numericHistogram(
             .reset_index()
             )
         vals = p[x].unique().tolist()
-        vals_format = [human_readable_num(i) for i in vals]
+        vals_format = [str(i+1).zfill(2) +
+                       ": " + human_readable_num(j)
+                       for i,j in enumerate(vals)]
         p.loc[:,x] = p[x].map(dict(zip(vals, vals_format)))
 
     return(p)
@@ -269,18 +273,20 @@ def numericHistogram(
 
     
     '''
-    
-    if len(df[x].unique()) > min_levels:
-        binner = True
+    if 'binner' in kwargs:
+        #binner = kwargs['binner']
+        pass
+    elif len(df[x].unique()) > min_levels:
+        kwargs['binner'] = True
     else:
-        binner = False
+        kwargs['binner'] = False
     p = _numericHistogram(
         df,
         x = x,
         oth_columns = line_columns,
         max_levels = max_levels,
         stat = stat,
-        binner = binner,
+        #binner = binner,
         **kwargs)
     
     p = plotBar(p,

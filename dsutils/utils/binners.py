@@ -4,6 +4,7 @@ import pandas as pd
 import os
 from decimal import Decimal
 from .dates import bin_dates
+import copy
 
 def cutpoints(
     x,
@@ -16,7 +17,7 @@ def cutpoints(
     Function to return cut points and bin labels for a numeric 1-D array
     
     Parameters
-    -----------------------------------------------
+    ----------
     x : numpy 1-D array
         numeric 1-D array
     
@@ -42,31 +43,19 @@ def cutpoints(
         printed bin labels
         
     Returns
-    -----------------------------------------------
+    -------
     c_final : numpy 1-D array
         final cut points
     '''
     
-    def log_spcl(x):
-        if x == 0:
-            return(0)
-        else:
-            return(math.log(abs(x),10))
-    
     # Create lower bound:
     lb = np.min(x)
-    if lb == 0:
-        lb_ord_of_mag = 0
-    else:
-        lb_ord_of_mag = int(np.floor(log_spcl(lb)))
+    lb_ord_of_mag = _order_of_mag(lb)
     lb_pwr = sig_fig - 1 - lb_ord_of_mag
     lb = np.floor(lb * 10**lb_pwr) / 10**lb_pwr
     # Create upper bound:
     ub = np.max(x)
-    if ub == 0:
-        ub_ord_of_mag = 0
-    else:
-        ub_ord_of_mag = int(np.floor(log_spcl(ub)))
+    ub_ord_of_mag = _order_of_mag(ub)
     ub_pwr = sig_fig - 1 - ub_ord_of_mag
     ub = np.ceil(ub * 10**ub_pwr) / 10**ub_pwr
     
@@ -110,8 +99,8 @@ def cutpoints(
     # add far endpoints to c:
     c = np.unique(np.append(np.append(lb,c),ub))
     # round/format values in c:
-    c_ord_of_mag = np.array([int(np.floor(log_spcl(i))) for i in c])
-    c_log_rnd = np.round(c / 10.0**c_ord_of_mag,sig_fig - 1)
+    c_ord_of_mag = np.array([_order_of_mag(i) for i in c])
+    c_log_rnd = np.round(c / 10.0**c_ord_of_mag, sig_fig - 1)
     c_final = np.unique(c_log_rnd * (10.0**c_ord_of_mag))
     return(c_final)
 
@@ -121,14 +110,17 @@ def human_readable_num(number, sig_fig = 3, **kwargs):
     Function for making numbers aesthetically-pleasing
     
     Parameters
-    -----------------------------------------------------
-    number : a number to format
+    ----------
+    number : float or int
+        A number to format
     
-    sig_fig : number of significant figures to print
+    sig_fig : int
+        Number of significant figures to print
     
     Returns
-    -----------------------------------------------------
-    z : number formatted as str
+    -------
+    z : str
+        number formatted as str
     '''
     if number == 0:
         z = '0'
@@ -158,21 +150,34 @@ def human_readable_num(number, sig_fig = 3, **kwargs):
     return(z)
 
 
-def cutter(df, x, max_levels = 20, point_mass_threshold = 0.1, sig_fig = 3, **kwargs):
+def cutter(
+    df, x, max_levels = 20, point_mass_threshold = 0.1,
+    sig_fig = 3, **kwargs):
     """
     Cut a numeric variable into bins
     
     Parameters
-    --------------------------
-    df : pandas DataFrame object
+    ----------
+    df : pandas.DataFrame
     
-    x : the name of the numeric variable in 'df' to construct bins from
+    x : str
+        the name of the numeric variable in 'df' to construct
+        bins from
     
-    max_levels : maximum number of bins to create from 'x'
+    max_levels : int
+        maximum number of bins to create from 'x'
+    
+    point_mass_threshold : float
+        Levels of 'x' with frequency greater than point_mass_threshold
+        get their own bin
+    
+    sig_fig : int
+        Significant figures to use in binning
     
     Returns
-    ---------------------------
-    z : binned values
+    -------
+    z : pandas.Series
+        Categorical series of binned values
     """
     
     df = df.loc[:,[x]].copy()
@@ -188,11 +193,11 @@ def cutter(df, x, max_levels = 20, point_mass_threshold = 0.1, sig_fig = 3, **kw
         # if there are no values exceeding point_mass_threshold
         # proceed as usual
         x_no_nan = ~np.isnan(df.loc[:,x].values)
-        c_final = cutpoints(
+        cps = cutpoints(
             df.loc[x_no_nan,x].values,
             ncuts = max_levels,
             **kwargs)
-        c_format = [human_readable_num(i, sig_fig) for i in c_final]
+        cps_format = [human_readable_num(i, sig_fig) for i in cps]
         pm_format = []
         
     elif len(pm) > 0:
@@ -203,24 +208,101 @@ def cutter(df, x, max_levels = 20, point_mass_threshold = 0.1, sig_fig = 3, **kw
         if len(rem.loc[x_no_nan,x].values) > 0:
             # apply cutpoints to rem if there are non-NaN
             # values
-            c_final = cutpoints(
+            cps = cutpoints(
                 rem.loc[x_no_nan,x].values,
-                ncuts = max_levels - len(pm),
+                ncuts = max_levels, # - len(pm),
                 **kwargs)
-            c_format = [human_readable_num(i, sig_fig) for i in c_final]
+            cps_format = [human_readable_num(i, sig_fig) for i in cps]
         else:
             # Otherwise, rem has no non-NaN values and
             # we just generate empty cutpoints and formatted numbers
-            c_final, c_format = np.array([]), []
+            cps, cps_format = np.array([]), []
         # Combine pm and c_final
         # Combine pm_format and c_format
         pm_format = [human_readable_num(i, sig_fig) for i in pm]
-        c_final = np.concatenate([c_final,pm])
-        c_format = c_format + pm_format
-        c_format = [x for _,x in sorted(zip(c_final.tolist(),c_format))]
-        c_final.sort()
 
+    # Construct bin_labels and pm_labels        
+    c_final, bin_labels, pm_labels = _finalize_bins(
+        cps, cps_format, pm, pm_format)
+
+    # Bin values
+    df.loc[~df[x].isin(pm),x + '_BINNED'] = pd.cut(
+        df.loc[~df[x].isin(pm),x].values,
+        c_final,
+        labels=bin_labels,
+        include_lowest=True)
+    
+    # Bring in point masses
+    for i,v in enumerate(pm):
+        df.loc[df[x] == v,x + '_BINNED'] = pm_labels[i]
+    
+    # Construct final labels
+    if len(bin_labels) > 0:
+        final_labels = bin_labels+pm_labels
+        final_labels.sort()
+    else:
+        final_labels = pm_labels
+        
+    # Apply labels
+    z = pd.Categorical(
+        df.loc[:,x + '_BINNED'].values,
+        categories = final_labels)
+    return(z)
+
+
+def binner_df(df, x, new_col, fill_nan = None, max_levels = 20, **kwargs):
+    """
+    Bin a numeric variable
+    
+    Parameters
+    --------------------------
+    df : pandas.DataFrame
+    
+    x : str
+        The name of the numeric variable in 'df' to
+        construct bins from
+    
+    new_col : str
+        Use as the name of the binned variable
+    
+    fill_nan : str
+        Value to fill nans with
+    
+    max_levels : int
+        Maximum number of bins to create from 'x'
+    
+    Returns
+    ---------------------------
+    pandas.DataFrame including new binned column
+    """
+    df_ = df.copy().assign(**{new_col : lambda z: cutter(z,x,max_levels,**kwargs)})
+    if fill_na is not None:
+        df_.replace({new_col:{np.nan:fill_na}})
+    return(df_)
+
+
+def _finalize_bins(cps,cps_format,pm,pm_format):
     # Construct bin_labels and pm_labels
+    if len(cps) > 2:
+        cps_int = cps[1:-1]
+        ridx = [min(
+            range(len(cps_int)),
+            key = lambda i: abs(cps_int[i] - j)) + 1
+                for j in pm
+               ]
+        ridx = list(set(ridx))
+        cps = cps.tolist()
+        cps_format = copy.deepcopy(cps_format)
+        for index in sorted(ridx, reverse=True):
+            del cps[index]
+            del cps_format[index]
+        cps = np.array(cps)
+    c_final = np.concatenate([cps,pm])
+    c_format = cps_format + pm_format
+    z = set(zip(c_final.tolist(),c_format))
+    c_final, c_format = [list(t) for t in zip(*z)]
+    c_format = [x for _,x in sorted(zip(c_final,c_format))]
+    c_final.sort()
     bin_labels = []
     pm_labels = []
     cntr = 0
@@ -235,39 +317,18 @@ def cutter(df, x, max_levels = 20, point_mass_threshold = 0.1, sig_fig = 3, **kw
                 c_format[i] +
                 ' - ' +
                 c_format[i+1])
-
-    df.loc[~df[x].isin(pm),x + '_BINNED'] = pd.cut(
-        df.loc[~df[x].isin(pm),x].values,
-        c_final,
-        labels=bin_labels,
-        include_lowest=True)
-    for i,v in enumerate(pm):
-        df.loc[df[x] == v,x + '_BINNED'] = pm_labels[i]
-    z = df.loc[:,x + '_BINNED'].values
-    return(z)
+    return(c_final, bin_labels, pm_labels)
 
 
-def binner_df(df, x, new_col, fill_nan = None, max_levels = 20, **kwargs):
-    """
-    Bin a numeric variable
+def _log_spcl(x):
+    if x == 0:
+        return(0)
+    else:
+        return(math.log(abs(x),10))
     
-    Parameters
-    --------------------------
-    df : pandas DataFrame object
-    
-    x : the name of the numeric variable in 'df' to construct bins from
-    
-    new_col : str to use as the name of the binned variable
-    
-    fill_nan : string to fill nan values
-    
-    max_levels : maximum number of bins to create from 'x'
-    
-    Returns
-    ---------------------------
-    df_ : pandas DataFrame including new binned column
-    """
-    df_ = df.copy().assign(**{new_col : lambda z: cutter(z,x,max_levels,**kwargs)})
-    if fill_na is not None:
-        df_.replace({new_col:{np.nan:fill_na}})
-    return(df_)
+def _order_of_mag(x):
+    if x == 0:
+        ord_of_mag = 0
+    else:
+        ord_of_mag = int(np.floor(_log_spcl(x)))
+    return(ord_of_mag)
