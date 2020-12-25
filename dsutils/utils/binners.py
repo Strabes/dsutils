@@ -5,6 +5,7 @@ import os
 from decimal import Decimal
 from .dates import bin_dates
 import copy
+import re
 
 def cutpoints(
     x,
@@ -129,9 +130,12 @@ def human_readable_num(number, sig_fig = 3, **kwargs):
         # if |number| >= 0.01
         if magnitude >= -2:
             z = ('%.' + str(sig_fig - 1 - magnitude) + 'f') % (number)
+            z = _remove_trailing_zeros(z)
         else:    
             final_num = number / 10**magnitude
-            z = ('%.' + str(sig_fig - 1) + 'f%s') % (final_num, 'E' + str(magnitude))
+            #z = ('%.' + str(sig_fig - 1) + 'f%s') % (final_num, 'E' + str(magnitude))
+            z = ('%.' + str(sig_fig - 1) + 'f') % (final_num)
+            z = _remove_trailing_zeros(z) + 'E' + str(magnitude)
     else:
         units = ['', 'K', 'M', 'G', 'T', 'P']
         k = 1000.0
@@ -142,11 +146,19 @@ def human_readable_num(number, sig_fig = 3, **kwargs):
         else:
             unit = units[magnitude]
         if np.abs(final_num) < 10:
-            z = ('%.' + str(sig_fig - 1) + 'f%s') % (final_num, unit)
+            #z = ('%.' + str(sig_fig - 1) + 'f%s') % (final_num, unit)
+            z = ('%.' + str(sig_fig - 1) + 'f') % (final_num)
+            z = _remove_trailing_zeros(z) + unit
         elif np.abs(final_num) < 100:
-            z = ('%.' + str(sig_fig-2) + 'f%s') % (final_num, unit)
+            #z = ('%.' + str(sig_fig-2) + 'f%s') % (final_num, unit)
+            z = ('%.' + str(sig_fig - 2) + 'f') % (final_num)
+            z = _remove_trailing_zeros(z) + unit
         else:
-            z = ('%.' + str(sig_fig-3) + 'f%s') % (final_num, unit)
+            #z = ('%.' + str(sig_fig-3) + 'f%s') % (final_num, unit)
+            z = ('%.' + str(sig_fig - 3) + 'f') % (final_num)
+            z = _remove_trailing_zeros(z) + unit
+            
+    #z = _remove_trailing_zeros(z)
     return(z)
 
 
@@ -194,8 +206,6 @@ def cutter(
             df.loc[x_no_nan,x].values,
             ncuts = max_levels,
             **kwargs)
-        cps_format = [human_readable_num(i, sig_fig) for i in cps]
-        pm_format = []
         
     elif len(pm) > 0:
         # if there are values exceeding point_mass_threshold
@@ -209,18 +219,14 @@ def cutter(
                 rem.loc[x_no_nan,x].values,
                 ncuts = max_levels, # - len(pm),
                 **kwargs)
-            cps_format = [human_readable_num(i, sig_fig) for i in cps]
         else:
             # Otherwise, rem has no non-NaN values and
-            # we just generate empty cutpoints and formatted numbers
-            cps, cps_format = np.array([]), []
-        # Create point mass formatted list
-        pm_format = [human_readable_num(i, sig_fig) for i in pm]
+            # we just generate empty cutpoints
+            cps = np.array([])
 
-    # Construct bin_labels and pm_labels        
-    c_final, bin_labels, pm_labels = _finalize_bins(
-        cps, cps_format, pm, pm_format)
-
+    # Construct bin_labels and pm_labels
+    c_final, bin_labels, pm_labels = _finalize_bins(cps,pm,sig_fig=sig_fig)
+    
     # Bin values
     df.loc[~df[x].isin(pm),x + '_BINNED'] = pd.cut(
         df.loc[~df[x].isin(pm),x].values,
@@ -274,45 +280,6 @@ def binner_df(df, x, new_col, fill_nan = None, max_levels = 20, **kwargs):
     return(df_)
 
 
-def _finalize_bins(cps,cps_format,pm,pm_format):
-    # Construct bin_labels and pm_labels
-    if len(cps) > 2:
-        cps_int = cps[1:-1]
-        ridx = [min(
-            range(len(cps_int)),
-            key = lambda i: abs(cps_int[i] - j)) + 1
-                for j in pm
-               ]
-        ridx = list(set(ridx))
-        cps = cps.tolist()
-        cps_format = copy.deepcopy(cps_format)
-        for index in sorted(ridx, reverse=True):
-            del cps[index]
-            del cps_format[index]
-        cps = np.array(cps)
-    c_final = np.concatenate([cps,pm])
-    c_format = cps_format + pm_format
-    z = set(zip(c_final.tolist(),c_format))
-    c_final, c_format = [list(t) for t in zip(*z)]
-    c_format = [x for _,x in sorted(zip(c_final,c_format))]
-    c_final.sort()
-    bin_labels = []
-    pm_labels = []
-    cntr = 0
-    for i in range(len(c_final)):
-        if c_final[i] in pm:
-            pm_labels.append(str(i+cntr+1).zfill(2) + ": " + c_format[i])
-            cntr+=1
-        if i < len(c_final) - 1:
-            bin_labels.append(
-                str(i + cntr +1).zfill(2) +
-                ': ' +
-                c_format[i] +
-                ' - ' +
-                c_format[i+1])
-    return(c_final, bin_labels, pm_labels)
-
-
 def _log_spcl(x):
     if x == 0:
         return(0)
@@ -331,3 +298,54 @@ def _point_mass(x, threshold = 0.1):
     v = cnts[cnts > threshold].index.values
     v.sort()
     return(v)
+
+
+def _remove_trailing_zeros(num_as_str):
+    if re.search("\.",num_as_str):
+        num_as_str = re.sub("0*$","",num_as_str)
+        num_as_str = re.sub("\.$","",num_as_str)
+    return(num_as_str)
+
+def _remove_closest(x, y, exclude_endpoints = True, **kwargs):
+    x = x.copy()
+    if len(x) > 2 or not exclude_endpoints:
+        if exclude_endpoints:
+            z = x[1:-1]
+        else:
+            z = x
+        r = range(len(z))
+        ridx = [min(r, key = lambda i: abs(z[i] - j)) + 1 for j in y]
+        ridx = list(set(ridx))
+        x = x.tolist()
+        for index in sorted(ridx, reverse=True):
+            del x[index]
+        x = np.array(x)
+    return(x)
+
+def _finalize_bins(x, pm, sig_fig = 3, **kwargs):
+    b = _remove_closest(x, pm, **kwargs)
+    b = np.unique(np.concatenate([b,pm]))
+    b.sort()
+    bin_labels, pm_labels = _label_constructor(b, pm, sig_fig = sig_fig, **kwargs)
+    return(b, bin_labels, pm_labels)
+
+def _label_constructor(x, pm, sig_fig = 3, **kwargs):
+    bin_labels = []
+    pm_labels = []
+    x_format = [human_readable_num(i, sig_fig = sig_fig) for i in x]
+    cntr = 0
+    for i in range(len(x)):
+        if x[i] in pm:
+            pm_labels.append(str(i+cntr+1).zfill(2) + ": " + x_format[i])
+            cntr+=1
+        if i < len(x) - 1:
+            bin_labels.append(
+                str(i + cntr +1).zfill(2) +
+                ': ' +
+                ('[' if i==0 and (x[i] not in pm) else '(') +
+                x_format[i] +
+                ', ' +
+                x_format[i+1] +
+                (']' if (x[i+1] not in pm) else ')')
+            )
+    return(bin_labels, pm_labels)
