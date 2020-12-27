@@ -12,10 +12,10 @@ from .binners import (
 )
 
 
-def plotBar(p,
+def plot_bar(p,
             x = 'x',
             line_columns = None,
-            bar = 'count',
+            normalize = False,
             **kwargs):
     '''
     Function for creating a bar plot for categorical data.
@@ -35,7 +35,8 @@ def plotBar(p,
 
     line_columns : optional list of columns to plot as lines
     
-    bar: 'count' or 'percent'
+    normalize : Boolean
+        If True, convert counts to percents
     
     **kwargs : optional parameters:
         fig : a matplotlib figure
@@ -54,18 +55,22 @@ def plotBar(p,
     prop_iter = iter(plt.rcParams['axes.prop_cycle'])
         
     n = p.shape[0]
-    if bar == 'count': _stat = 'Count'
-    elif bar == 'percent':
-        p['Percent'] = p.Count / sum(p.Count)
-        _stat = 'Percent'
+    if not normalize:
+        _stat = '_COUNT_'
+        _stat_label = 'Count'
+    elif normalize:
+        p['_PERCENT_'] = p._COUNT_ / sum(p._COUNT_)
+        _stat = '_PERCENT_'
+        _stat_label = 'Percent'
         
     _ = ax.bar(
         range(n),
-        p.loc[:,'Count'],
+        p.loc[:,_stat],
         align='center',
         width=0.9,
         color = next(prop_iter)['color']
     )
+    
     ax.set_xticks(range(n))
     ax.set_xticklabels(
         p.loc[:,x].values.tolist(),
@@ -88,7 +93,7 @@ def plotBar(p,
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     plt.sca(ax)
-    plt.ylabel('Count')
+    plt.ylabel(_stat_label)
     if 'xlabel' in kwargs:
         plt.xlabel(kwargs['xlabel'])
     return(fig)
@@ -96,7 +101,7 @@ def plotBar(p,
 
 
 
-def _numericHistogram(
+def _numeric_histogram(
     df,
     x = 'x',
     oth_columns = None,
@@ -132,28 +137,30 @@ def _numericHistogram(
     elif isinstance(oth_columns,str):
         oth_columns = [oth_columns]
     
-    x_grp = x + ' _GROUPED_'
+    #x_grp = x + ' _GROUPED_'
     
     if len(oth_columns) > 0:
         stats = dict(zip(oth_columns,[stat]*len(oth_columns)))
     else:
         stats = dict()
-    stats['Count'] = 'sum'
+        
+    stats['_COUNT_'] = 'sum'
+    
     if binner:
         p = (
             df[[*oth_columns,x]].copy()
-            .assign(**{x_grp: lambda z: cutter(z,x,max_levels,**kwargs)})
-            .replace({x_grp:{np.nan:'MISSING'}})
-            .assign(Count = 1)
-            .groupby(x_grp)
+            .assign(**{x: lambda z: cutter(z,x,max_levels,**kwargs)})
+            .replace({x:{np.nan:'MISSING'}})
+            .assign(_COUNT_ = 1)
+            .groupby(x)
             .agg(stats)
             .reset_index()
-            .rename(columns = {x_grp:x})
+            #.rename(columns = {x_grp:x})
             )
     else:
         p = (
             df[[*oth_columns,x]].copy()
-            .assign(Count = 1)
+            .assign(_COUNT_ = 1)
             .groupby(x,dropna=False)
             .agg(stats)
             .reset_index()
@@ -166,7 +173,7 @@ def _numericHistogram(
 
     return(p)
 
-def _categoricalHistogram(
+def _categorical_histogram(
     df,
     x = 'x',
     oth_columns = None,
@@ -207,20 +214,21 @@ def _categoricalHistogram(
     elif isinstance(oth_columns,str):
         oth_columns = [oth_columns]
     
-    x_grp = x + ' _GROUPED_'
+    x_grp = '_' + x + ' _GROUPED_'
     
     def _max_lvl_cutoff(f):
         y = f[x] if f.RN <= max_levels else oth_val
         return(y)
     
     k = {x_grp: lambda z: z.apply(_max_lvl_cutoff, axis = 1)}
+    #k = {x: lambda z: z.apply(_max_lvl_cutoff, axis = 1)}
     cnts = (
         df.groupby(x)
           .size()
-          .to_frame(name='Count')
+          .to_frame(name='_COUNT_')
           .reset_index()
-          .sort_values('Count',ascending = False)
-          .assign(RN = lambda x: x['Count'].rank(method = 'first',ascending = False))
+          .sort_values('_COUNT_',ascending = False)
+          .assign(RN = lambda x: x['_COUNT_'].rank(method = 'first',ascending = False))
           .assign(**k)
         )
     m = dict(zip(cnts[x],cnts[x_grp]))
@@ -228,10 +236,10 @@ def _categoricalHistogram(
         stats = dict(zip(oth_columns,[stat]*len(oth_columns)))
     else:
         stats = dict()
-    stats['Count'] = 'sum'
+    stats['_COUNT_'] = 'sum'
     p = (
         df.assign(**{x_grp: lambda f: f[x].map(m)})
-          .assign(Count = 1)
+          .assign(_COUNT_ = 1)
           .groupby(x_grp)
           .agg(stats)
           .reset_index()
@@ -239,13 +247,14 @@ def _categoricalHistogram(
     )
     return(p)
 
-def numericHistogram(
+def numeric_histogram(
     df,
     x = 'x',
     line_columns = None,
     max_levels = 20,
     stat = 'mean',
     min_levels = 20,
+    normalize = False,
     **kwargs):
     '''
     Function to create matplotlib histogram plot
@@ -267,6 +276,9 @@ def numericHistogram(
     min_levels : if 'x' has more than min_levels distinct level,
         induce binning
         
+    normalize : Boolean
+        If True, transform counts to percents
+        
     Returns
     ---------------------------
     p : matplotlib figure
@@ -280,7 +292,7 @@ def numericHistogram(
         kwargs['binner'] = True
     else:
         kwargs['binner'] = False
-    p = _numericHistogram(
+    p = _numeric_histogram(
         df,
         x = x,
         oth_columns = line_columns,
@@ -289,20 +301,22 @@ def numericHistogram(
         #binner = binner,
         **kwargs)
     
-    p = plotBar(p,
+    p = plot_bar(p,
             x = x,
             line_columns = line_columns,
+            normalize = normalize,
             **kwargs)
     return(p)
 
 
-def categoricalHistogram(
+def categorical_histogram(
     df,
     x = 'x',
     line_columns = None,
     max_levels = 20,
     oth_val = '_OTHER_',
     stat = 'mean',
+    normalize = False,
     **kwargs):
     '''
     Function to create matplotlib histogram plot
@@ -325,12 +339,15 @@ def categoricalHistogram(
     stat : aggregate statistic to calculate on 'oth_columns' within
         bins of 'x'
         
+    normalize : Boolean
+        If True, use percents instead of counts
+        
     Returns
     ---------------------------
     p : matplotlib figure
     '''
 
-    p = _categoricalHistogram(
+    p = _categorical_histogram(
         df,
         x = x,
         oth_columns = line_columns,
@@ -338,14 +355,15 @@ def categoricalHistogram(
         oth_val = oth_val,
         stat = stat,
         **kwargs)
-    p = plotBar(p,
+    p = plot_bar(p,
             x = x,
             line_columns = line_columns,
+            normalize = normalize,
             **kwargs)
     return(p)
     
     
-def categoricalHeatmap(
+def categorical_heatmap(
     df,
     x,
     y,
