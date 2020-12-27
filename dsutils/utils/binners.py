@@ -281,12 +281,39 @@ def binner_df(df, x, new_col, fill_nan = None, max_levels = 20, **kwargs):
 
 
 def _log_spcl(x):
+    """
+    Log special returns the base 10 log of the absolute value of x for
+    non-zero x. Otherwise, if x is 0, return 0
+    
+    Parameters
+    ----------
+    
+    x : int or float
+    
+    Returns
+    -------
+    
+    float
+    """
     if x == 0:
         return(0)
     else:
         return(math.log(abs(x),10))
     
 def _order_of_mag(x):
+    """
+    Calculate the order of magnitude of a number
+    
+    Parameters
+    ----------
+    
+    x : float or int
+    
+    Returns
+    -------
+    
+    int : order of magnitude of x
+    """
     if x == 0:
         ord_of_mag = 0
     else:
@@ -294,6 +321,24 @@ def _order_of_mag(x):
     return(ord_of_mag)
 
 def _point_mass(x, threshold = 0.1):
+    """
+    Find point masses in 1-D array with frequency exceeding
+    specified value
+    
+    Parameters
+    ----------
+    
+    x : 1-D numpy array
+    
+    threshold : float
+        If value frequency exceeds threshold, consider value to have
+        point mass
+        
+    Returns
+    -------
+    
+    1-D numpy array that contains the point masses
+    """
     cnts = x.value_counts(normalize=True)
     v = cnts[cnts > threshold].index.values
     v.sort()
@@ -301,12 +346,45 @@ def _point_mass(x, threshold = 0.1):
 
 
 def _remove_trailing_zeros(num_as_str):
+    """
+    Remove unnecessary trailing zeros from number
+    
+    Parameters
+    ----------
+    
+    num_as_str : str
+        Number as string
+        
+    Returns
+    -------
+    
+    Number as str with unnecessary trailing zeros removed
+    """
     if re.search("\.",num_as_str):
         num_as_str = re.sub("0*$","",num_as_str)
         num_as_str = re.sub("\.$","",num_as_str)
     return(num_as_str)
 
 def _remove_closest(x, y, exclude_endpoints = True, **kwargs):
+    """
+    Remove the elements of x that are closest to the elements of y.
+    Optionally excluding the endpoints of x in the determination
+    
+    Parameters
+    ----------
+    
+    x : 1-D numpy array
+    
+    y : 1-D numpy array
+    
+    exclude_endpoints : Boolean
+    
+    Returns
+    -------
+    
+    numpy 1-D array : the elements of x after removing the values closest
+        to the elements of y
+    """
     x = x.copy()
     if len(x) > 2 or not exclude_endpoints:
         if exclude_endpoints:
@@ -323,6 +401,33 @@ def _remove_closest(x, y, exclude_endpoints = True, **kwargs):
     return(x)
 
 def _finalize_bins(x, pm, sig_fig = 3, **kwargs):
+    """
+    Orchestrator for creating bins for numeric variables
+    
+    Parameters
+    ----------
+    
+    x : 1-D numpy array
+        Preliminary bin endpoints
+        
+    pm : 1-D numpy array
+        Values with point masses
+        
+    sig_fig : int
+        Number of significant figures to use
+        
+    Returns
+    -------
+    
+    b : 1-D numpy array
+        Finalizing bin endpoints
+        
+    bin_labels : list
+        Final bin labels
+        
+    pm_labels : list
+        Final point mass labels
+    """
     b = _remove_closest(x, pm, **kwargs)
     b = np.unique(np.concatenate([b,pm]))
     b.sort()
@@ -330,6 +435,30 @@ def _finalize_bins(x, pm, sig_fig = 3, **kwargs):
     return(b, bin_labels, pm_labels)
 
 def _label_constructor(x, pm, sig_fig = 3, **kwargs):
+    """
+    Create bin labels for histogramming a numeric variable
+    
+    Parameters
+    ----------
+    
+    x : 1-D numpy array
+        The cutpoints for binning
+    
+    pm : 1-D numpy array
+        The values with point masses
+        
+    sig_fig : int
+        The number of significant figures to use
+        
+    Returns
+    -------
+    
+    bin_labels : list
+        Labels for the bins
+        
+    pm_labels : list
+        Labels for the point masses
+    """
     bin_labels = []
     pm_labels = []
     x_format = [human_readable_num(i, sig_fig = sig_fig) for i in x]
