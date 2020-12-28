@@ -123,7 +123,8 @@ def human_readable_num(number, sig_fig = 3, **kwargs):
     z : str
         number formatted as str
     '''
-    if number == 0:
+    if np.isnan(number): z = 'MISSING'
+    elif number == 0:
         z = '0'
     elif np.abs(number) < 1:
         magnitude = int(math.floor(math.log(np.abs(number), 10)))
