@@ -250,7 +250,7 @@ def cutter(
     return(z)
 
 
-def binner_df(df, x, new_col, fill_nan = None, max_levels = 20, **kwargs):
+def binner_df(df, x, new_col = None, fill_nan = "MISSING", max_levels = 20, **kwargs):
     """
     Bin a numeric variable
     
@@ -275,9 +275,10 @@ def binner_df(df, x, new_col, fill_nan = None, max_levels = 20, **kwargs):
     ---------------------------
     pandas.DataFrame including new binned column
     """
+    if new_col is None: new_col = x
     df_ = df.copy().assign(**{new_col : lambda z: cutter(z,x,max_levels,**kwargs)})
-    if fill_na is not None:
-        df_.replace({new_col:{np.nan:fill_na}})
+    if fill_nan is not None:
+        df_.replace({new_col:{np.nan:fill_nan}},inplace=True)
     return(df_)
 
 
