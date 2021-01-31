@@ -74,3 +74,15 @@ def cramers_corrected_matrix(df, reorder_cuthill_mckee = True):
         )
     
     return(Z)
+
+def cramers_v(df,x,y):
+    if isinstance(x,str): x = np.array([x])
+    elif isinstance(x,list): x = np.array(x)
+        
+    @np.vectorize
+    def _cramers_v(x):
+        z = cramers_corrected_stat(
+                pd.crosstab(df[x],df[y]).values)
+        return(z)
+    
+    return(_cramers_v(x))

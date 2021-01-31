@@ -324,13 +324,13 @@ def _order_of_mag(x):
 
 def _point_mass(x, threshold = 0.1):
     """
-    Find point masses in 1-D array with frequency exceeding
+    Find point masses in pandas.Series with frequency exceeding
     specified value
     
     Parameters
     ----------
     
-    x : 1-D numpy array
+    x : pandas.Series
     
     threshold : float
         If value frequency exceeds threshold, consider value to have
