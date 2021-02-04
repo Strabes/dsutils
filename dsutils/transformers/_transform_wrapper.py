@@ -26,6 +26,7 @@ class TransformWrapper(BaseTransformer):
             and which returns a pandas.DataFrame
         """
         self._func = func
+        self._kwargs = kwargs
         self._fitted = False
         
     def fit(self, df):
@@ -36,5 +37,5 @@ class TransformWrapper(BaseTransformer):
             raise Exception("Transformation not fit yet")
         if not in_place:
             df = df.copy()
-        df = self._func(df)
+        df = self._func(df, **self._kwargs)
         if not in_place: return(df)
