@@ -250,7 +250,7 @@ def cutter(
     return(z)
 
 
-def binner_df(df, x, new_col, fill_nan = None, max_levels = 20, **kwargs):
+def binner_df(df, x, new_col = None, fill_nan = "MISSING", max_levels = 20, **kwargs):
     """
     Bin a numeric variable
     
@@ -275,9 +275,10 @@ def binner_df(df, x, new_col, fill_nan = None, max_levels = 20, **kwargs):
     ---------------------------
     pandas.DataFrame including new binned column
     """
+    if new_col is None: new_col = x
     df_ = df.copy().assign(**{new_col : lambda z: cutter(z,x,max_levels,**kwargs)})
-    if fill_na is not None:
-        df_.replace({new_col:{np.nan:fill_na}})
+    if fill_nan is not None:
+        df_.replace({new_col:{np.nan:fill_nan}},inplace=True)
     return(df_)
 
 
@@ -323,13 +324,13 @@ def _order_of_mag(x):
 
 def _point_mass(x, threshold = 0.1):
     """
-    Find point masses in 1-D array with frequency exceeding
+    Find point masses in pandas.Series with frequency exceeding
     specified value
     
     Parameters
     ----------
     
-    x : 1-D numpy array
+    x : pandas.Series
     
     threshold : float
         If value frequency exceeds threshold, consider value to have
