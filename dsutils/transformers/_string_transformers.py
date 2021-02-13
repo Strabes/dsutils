@@ -37,7 +37,7 @@ class RegexReplacer(BaseTransformer):
             'all' - replace the entire string when match is found
         """
         super(RegexReplacer, self).__init__(x)
-        self._pattern = regex
+        self._pattern = pattern
         self._replacement = replacement
         self._case_sensitive = case_sensitive
         self._strip = strip
