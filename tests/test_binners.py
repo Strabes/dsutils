@@ -26,7 +26,7 @@ def example_data():
                2, 1.1 ]}
     ))
 
-def test_cutter(datadir,example_data):
+def test_cutter(example_data):
     c = pd.Categorical(
         ['02: 0', '04: 1', '05: (1, 2.98]',
         '04: 1', '06: (2.98, 3.1]', '01: [-0.5, 0)',
