@@ -10,7 +10,7 @@ def list_reqs(fname='requirements.txt'):
 
 setuptools.setup(
     name="dsutils", # Replace with your own username
-    version="0.0.1",
+    version="0.0.2",
     author="Greg Strabel",
     author_email="gregory.strabel@gmail.com",
     description="Python Utilities for Data Science",
