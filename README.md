@@ -1,5 +1,4 @@
-# Data Science Utilities
-# <img alt="dsutils" src="DataScienceUtilitiesLogo.png" height="60">
+# <img alt="dsutils" src="DataScienceUtilitiesLogo.png" height="150">
 
 ![Python package](https://github.com/Strabes/dsutils/workflows/Python%20package/badge.svg?branch=master)
 [![codecov](https://codecov.io/gh/Strabes/dsutils/branch/master/graph/badge.svg?token=CA424HKG5U)](https://codecov.io/gh/Strabes/dsutils)
