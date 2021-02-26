@@ -9,7 +9,7 @@ def list_reqs(fname='requirements.txt'):
         return fd.read().splitlines()
 
 setuptools.setup(
-    name="dsutils", # Replace with your own username
+    name="dsutils",
     version="0.0.2",
     author="Greg Strabel",
     author_email="gregory.strabel@gmail.com",
