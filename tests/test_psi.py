@@ -1,10 +1,10 @@
+import math
 import pytest
 import pandas as pd
 import numpy as np
-#from distutils import dir_util
-import math
 
 from dsutils.monitoring.psi import PSI
+
 
 def test_PSI():
     df1 = pd.DataFrame({

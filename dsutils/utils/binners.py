@@ -61,7 +61,7 @@ def cutpoints(
     ub_ord_of_mag = _order_of_mag(ub)
     ub_pwr = sig_fig - 1 - ub_ord_of_mag
     ub = np.ceil(ub * 10**ub_pwr) / 10**ub_pwr
-    
+
     # Apply quantile cutoffs if provided:
     if (qntl_cutoff is not None and
             len(qntl_cutoff) == 2 and
@@ -70,7 +70,7 @@ def cutpoints(
         ep = np.quantile(x, qntl_cutoff)
     else:
         ep = np.array([lb,ub])
-        
+
     # Create cut points
     if isinstance(cuts,str):
         if cuts == 'linear':
@@ -105,10 +105,10 @@ def cutpoints(
     c_ord_of_mag = np.array([_order_of_mag(i) for i in c])
     c_log_rnd = np.round(c / 10.0**c_ord_of_mag, sig_fig - 1)
     c_final = np.unique(c_log_rnd * (10.0**c_ord_of_mag))
-    return(c_final)
+    return c_final
 
 
-def human_readable_num(number, sig_fig = 3, **kwargs):
+def human_readable_num(number, sig_fig=3, **kwargs):
     '''
     Function for making numbers aesthetically-pleasing
 
@@ -160,47 +160,47 @@ def human_readable_num(number, sig_fig = 3, **kwargs):
             #z = ('%.' + str(sig_fig-3) + 'f%s') % (final_num, unit)
             z = ('%.' + str(sig_fig - 3) + 'f') % (final_num)
             z = _remove_trailing_zeros(z) + unit
-            
+
     #z = _remove_trailing_zeros(z)
-    return(z)
+    return z
 
 
 def cutter(
-    df, x, max_levels = 20, point_mass_threshold = 0.1,
-    sig_fig = 3, **kwargs):
+    df, x, max_levels=20, point_mass_threshold=0.1,
+    sig_fig=3, **kwargs):
     """
     Cut a numeric variable into bins
-    
+
     Parameters
     ----------
     df : pandas.DataFrame
-    
+
     x : str
         the name of the numeric variable in 'df' to construct
         bins from
-    
+
     max_levels : int
         maximum number of bins to create from 'x'
-    
+
     point_mass_threshold : float
         Levels of 'x' with frequency greater than point_mass_threshold
         get their own bin
-    
+
     sig_fig : int
         Significant figures to use in binning
-    
+
     Returns
     -------
     z : pandas.Series
         Categorical series of binned values
     """
-    
+
     df = df.loc[:,[x]].copy()
-    
+
     # pm contains any values that exceed point_mass_threshold
     # pm is 1-D numpy.array
     pm = _point_mass(df[x], threshold = point_mass_threshold)
-    
+
     if len(pm) == 0:
         # if there are no values exceeding point_mass_threshold
         # proceed as usual
@@ -209,7 +209,7 @@ def cutter(
             df.loc[x_no_nan,x].values,
             ncuts = max_levels,
             **kwargs)
-        
+
     elif len(pm) > 0:
         # if there are values exceeding point_mass_threshold
         # put all remaining values in rem
@@ -229,27 +229,27 @@ def cutter(
 
     # Construct bin_labels and pm_labels
     c_final, bin_labels, pm_labels = _finalize_bins(cps,pm,sig_fig=sig_fig)
-    
+
     # Bin values
     df.loc[~df[x].isin(pm),x + '_BINNED'] = pd.cut(
         df.loc[~df[x].isin(pm),x].values,
         c_final,
         labels=bin_labels,
         include_lowest=True)
-    
+
     # Bring in point masses
     for i,v in enumerate(pm):
         df.loc[df[x] == v,x + '_BINNED'] = pm_labels[i]
-    
+
     # Construct final labels
     final_labels = bin_labels+pm_labels
     final_labels.sort()
-        
+
     # Apply labels
     z = pd.Categorical(
         df.loc[:,x + '_BINNED'].values,
         categories = final_labels)
-    return(z)
+    return z
 
 
 def binner_df(
@@ -285,7 +285,7 @@ def binner_df(
         **{new_col: lambda z: cutter(z, x, max_levels, **kwargs)})
     if fill_nan is not None:
         df_.replace({new_col: {np.nan: fill_nan}}, inplace=True)
-    return(df_)
+    return df_
 
 
 def _log_spcl(x):
@@ -304,9 +304,9 @@ def _log_spcl(x):
     float
     """
     if x == 0:
-        return(0)
+        return 0
     else:
-        return(math.log(abs(x), 10))
+        return math.log(abs(x), 10)
 
 
 def _order_of_mag(x):
@@ -327,7 +327,7 @@ def _order_of_mag(x):
         ord_of_mag = 0
     else:
         ord_of_mag = int(np.floor(_log_spcl(x)))
-    return(ord_of_mag)
+    return ord_of_mag
 
 
 def _point_mass(x, threshold=0.1):
@@ -352,7 +352,7 @@ def _point_mass(x, threshold=0.1):
     cnts = x.value_counts(normalize=True)
     v = cnts[cnts > threshold].index.values
     v.sort()
-    return(v)
+    return v
 
 
 def _remove_trailing_zeros(num_as_str):
@@ -373,7 +373,7 @@ def _remove_trailing_zeros(num_as_str):
     if re.search("\\.", num_as_str):
         num_as_str = re.sub("0*$", "", num_as_str)
         num_as_str = re.sub("\\.$", "", num_as_str)
-    return(num_as_str)
+    return num_as_str
 
 
 def _remove_closest(x, y, exclude_endpoints=True, **kwargs):
@@ -409,7 +409,7 @@ def _remove_closest(x, y, exclude_endpoints=True, **kwargs):
         for index in sorted(ridx, reverse=True):
             del x[index]
         x = np.array(x)
-    return(x)
+    return x
 
 
 def _finalize_bins(x, pm, sig_fig=3, **kwargs):
@@ -445,7 +445,7 @@ def _finalize_bins(x, pm, sig_fig=3, **kwargs):
     b.sort()
     bin_labels, pm_labels = _label_constructor(
         b, pm, sig_fig=sig_fig, **kwargs)
-    return(b, bin_labels, pm_labels)
+    return b, bin_labels, pm_labels
 
 
 def _label_constructor(x, pm, sig_fig=3, **kwargs):
@@ -491,4 +491,4 @@ def _label_constructor(x, pm, sig_fig=3, **kwargs):
                 x_format[i+1] +
                 (']' if (x[i+1] not in pm) else ')')
             )
-    return(bin_labels, pm_labels)
+    return bin_labels, pm_labels
