@@ -13,6 +13,7 @@ setuptools.setup(
     version="0.0.2",
     author="Greg Strabel",
     author_email="gregory.strabel@gmail.com",
+    license="BSD 3",
     description="Python Utilities for Data Science",
     long_description=long_description,
     long_description_content_type="text/markdown",
