@@ -5,9 +5,8 @@ be learned from the data. This class implements
 fit, transform and fit_transform methods for the function.
 """
 
-import pandas as pd
-import numpy as np
 from ._base import BaseTransformer
+
 
 class TransformWrapper(BaseTransformer):
     """
@@ -20,7 +19,7 @@ class TransformWrapper(BaseTransformer):
         """
         Parameters
         ----------
-        
+
         func : callable
             A function with a single argument, a pandas.DataFrame,
             and which returns a pandas.DataFrame
@@ -28,14 +27,28 @@ class TransformWrapper(BaseTransformer):
         self._func = func
         self._kwargs = kwargs
         self._fitted = False
-        
+
     def fit(self, df):
+        """Fit method
+        Parameters
+        ----------
+        df : pandas.DataFrame
+        """
         self._fitted = True
-    
-    def transform(self, df, in_place = False):
+
+    def transform(self, df, in_place=False):
+        """Transform method
+        Parameters
+        ----------
+        df : pandas.DataFrame
+
+        in_place : Boolean
+          default : False
+        """
         if not self._fitted:
             raise Exception("Transformation not fit yet")
         if not in_place:
             df = df.copy()
         df = self._func(df, **self._kwargs)
-        if not in_place: return(df)
+        if not in_place:
+            return(df)

@@ -9,10 +9,11 @@ def list_reqs(fname='requirements.txt'):
         return fd.read().splitlines()
 
 setuptools.setup(
-    name="dsutils", # Replace with your own username
+    name="dsutils",
     version="0.0.2",
     author="Greg Strabel",
     author_email="gregory.strabel@gmail.com",
+    license="BSD 3",
     description="Python Utilities for Data Science",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -20,7 +21,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: MIT License",
+        "License :: OSI Approved :: BSD License",
         "Operating System :: OS Independent",
     ],
     install_requires = list_reqs(),

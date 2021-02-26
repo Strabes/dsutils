@@ -1,54 +1,56 @@
-import numpy as np
-import math
-import pandas as pd
-import os
-from decimal import Decimal
-from .dates import bin_dates
-import copy
+"""
+Binner functions for grouping numeric variables into
+bins
+"""
+
 import re
+import math
+import numpy as np
+import pandas as pd
+
 
 def cutpoints(
     x,
-    qntl_cutoff = [0.025,0.975],
-    cuts = 'linear',
-    ncuts = 10,
-    sig_fig = 3,
+    qntl_cutoff=[0.025,0.975],
+    cuts='linear',
+    ncuts=10,
+    sig_fig=3,
     **kwargs):
     '''
     Function to return cut points and bin labels for a numeric 1-D array
-    
+
     Parameters
     ----------
     x : numpy 1-D array
         numeric 1-D array
-    
+
     qntl_cutoff : list
         list of length two with lower and upper quantile cutoffs:
         To prevent extreme outliers from influencing the cutpoints
         for the bins, construct the cutpoints between the qntl_cutoff[0] quantile
         and the qntl_cutoff[1] quantile. If qntl_cutoff is None then do not
         ignore outliers
-        
+
     cuts: str
         one of: 'linear', 'log', 'logp1', 'quantile'
         'linear' : equally spaced cutpoints
         'log' : logarithmically spaced cutpoints
         'logp1' : logarithmically spaced cutpoints after adding 1
         'quantile' : cutpoints corresponding to equally spaced quantiles
-        
+
     ncut : int
         number of cutpoints
-    
+
     sig_fig : int
         number of significant figures to display in the aesthetically
         printed bin labels
-        
+
     Returns
     -------
     c_final : numpy 1-D array
         final cut points
     '''
-    
+
     # Create lower bound:
     lb = np.nanmin(x)
     lb_ord_of_mag = _order_of_mag(lb)
@@ -59,7 +61,7 @@ def cutpoints(
     ub_ord_of_mag = _order_of_mag(ub)
     ub_pwr = sig_fig - 1 - ub_ord_of_mag
     ub = np.ceil(ub * 10**ub_pwr) / 10**ub_pwr
-    
+
     # Apply quantile cutoffs if provided:
     if (qntl_cutoff is not None and
             len(qntl_cutoff) == 2 and
@@ -68,7 +70,7 @@ def cutpoints(
         ep = np.quantile(x, qntl_cutoff)
     else:
         ep = np.array([lb,ub])
-        
+
     # Create cut points
     if isinstance(cuts,str):
         if cuts == 'linear':
@@ -103,21 +105,21 @@ def cutpoints(
     c_ord_of_mag = np.array([_order_of_mag(i) for i in c])
     c_log_rnd = np.round(c / 10.0**c_ord_of_mag, sig_fig - 1)
     c_final = np.unique(c_log_rnd * (10.0**c_ord_of_mag))
-    return(c_final)
+    return c_final
 
 
-def human_readable_num(number, sig_fig = 3, **kwargs):
+def human_readable_num(number, sig_fig=3, **kwargs):
     '''
     Function for making numbers aesthetically-pleasing
-    
+
     Parameters
     ----------
     number : float or int
         A number to format
-    
+
     sig_fig : int
         Number of significant figures to print
-    
+
     Returns
     -------
     z : str
@@ -158,47 +160,47 @@ def human_readable_num(number, sig_fig = 3, **kwargs):
             #z = ('%.' + str(sig_fig-3) + 'f%s') % (final_num, unit)
             z = ('%.' + str(sig_fig - 3) + 'f') % (final_num)
             z = _remove_trailing_zeros(z) + unit
-            
+
     #z = _remove_trailing_zeros(z)
-    return(z)
+    return z
 
 
 def cutter(
-    df, x, max_levels = 20, point_mass_threshold = 0.1,
-    sig_fig = 3, **kwargs):
+    df, x, max_levels=20, point_mass_threshold=0.1,
+    sig_fig=3, **kwargs):
     """
     Cut a numeric variable into bins
-    
+
     Parameters
     ----------
     df : pandas.DataFrame
-    
+
     x : str
         the name of the numeric variable in 'df' to construct
         bins from
-    
+
     max_levels : int
         maximum number of bins to create from 'x'
-    
+
     point_mass_threshold : float
         Levels of 'x' with frequency greater than point_mass_threshold
         get their own bin
-    
+
     sig_fig : int
         Significant figures to use in binning
-    
+
     Returns
     -------
     z : pandas.Series
         Categorical series of binned values
     """
-    
+
     df = df.loc[:,[x]].copy()
-    
+
     # pm contains any values that exceed point_mass_threshold
     # pm is 1-D numpy.array
     pm = _point_mass(df[x], threshold = point_mass_threshold)
-    
+
     if len(pm) == 0:
         # if there are no values exceeding point_mass_threshold
         # proceed as usual
@@ -207,7 +209,7 @@ def cutter(
             df.loc[x_no_nan,x].values,
             ncuts = max_levels,
             **kwargs)
-        
+
     elif len(pm) > 0:
         # if there are values exceeding point_mass_threshold
         # put all remaining values in rem
@@ -227,163 +229,170 @@ def cutter(
 
     # Construct bin_labels and pm_labels
     c_final, bin_labels, pm_labels = _finalize_bins(cps,pm,sig_fig=sig_fig)
-    
+
     # Bin values
     df.loc[~df[x].isin(pm),x + '_BINNED'] = pd.cut(
         df.loc[~df[x].isin(pm),x].values,
         c_final,
         labels=bin_labels,
         include_lowest=True)
-    
+
     # Bring in point masses
     for i,v in enumerate(pm):
         df.loc[df[x] == v,x + '_BINNED'] = pm_labels[i]
-    
+
     # Construct final labels
     final_labels = bin_labels+pm_labels
     final_labels.sort()
-        
+
     # Apply labels
     z = pd.Categorical(
         df.loc[:,x + '_BINNED'].values,
         categories = final_labels)
-    return(z)
+    return z
 
 
-def binner_df(df, x, new_col = None, fill_nan = "MISSING", max_levels = 20, **kwargs):
+def binner_df(
+    df, x, new_col=None,
+    fill_nan="MISSING", max_levels=20, **kwargs):
     """
     Bin a numeric variable
-    
+
     Parameters
     --------------------------
     df : pandas.DataFrame
-    
+
     x : str
         The name of the numeric variable in 'df' to
         construct bins from
-    
+
     new_col : str
         Use as the name of the binned variable
-    
+
     fill_nan : str
         Value to fill nans with
-    
+
     max_levels : int
         Maximum number of bins to create from 'x'
-    
+
     Returns
     ---------------------------
     pandas.DataFrame including new binned column
     """
-    if new_col is None: new_col = x
-    df_ = df.copy().assign(**{new_col : lambda z: cutter(z,x,max_levels,**kwargs)})
+    if new_col is None:
+        new_col = x
+    df_ = df.copy().assign(
+        **{new_col: lambda z: cutter(z, x, max_levels, **kwargs)})
     if fill_nan is not None:
-        df_.replace({new_col:{np.nan:fill_nan}},inplace=True)
-    return(df_)
+        df_.replace({new_col: {np.nan: fill_nan}}, inplace=True)
+    return df_
 
 
 def _log_spcl(x):
     """
     Log special returns the base 10 log of the absolute value of x for
     non-zero x. Otherwise, if x is 0, return 0
-    
+
     Parameters
     ----------
-    
+
     x : int or float
-    
+
     Returns
     -------
-    
+
     float
     """
     if x == 0:
-        return(0)
+        return 0
     else:
-        return(math.log(abs(x),10))
-    
+        return math.log(abs(x), 10)
+
+
 def _order_of_mag(x):
     """
     Calculate the order of magnitude of a number
-    
+
     Parameters
     ----------
-    
+
     x : float or int
-    
+
     Returns
     -------
-    
+
     int : order of magnitude of x
     """
     if x == 0:
         ord_of_mag = 0
     else:
         ord_of_mag = int(np.floor(_log_spcl(x)))
-    return(ord_of_mag)
+    return ord_of_mag
 
-def _point_mass(x, threshold = 0.1):
+
+def _point_mass(x, threshold=0.1):
     """
     Find point masses in pandas.Series with frequency exceeding
     specified value
-    
+
     Parameters
     ----------
-    
+
     x : pandas.Series
-    
+
     threshold : float
         If value frequency exceeds threshold, consider value to have
         point mass
-        
+
     Returns
     -------
-    
+
     1-D numpy array that contains the point masses
     """
     cnts = x.value_counts(normalize=True)
     v = cnts[cnts > threshold].index.values
     v.sort()
-    return(v)
+    return v
 
 
 def _remove_trailing_zeros(num_as_str):
     """
     Remove unnecessary trailing zeros from number
-    
+
     Parameters
     ----------
-    
+
     num_as_str : str
         Number as string
-        
+
     Returns
     -------
-    
+
     Number as str with unnecessary trailing zeros removed
     """
-    if re.search("\.",num_as_str):
-        num_as_str = re.sub("0*$","",num_as_str)
-        num_as_str = re.sub("\.$","",num_as_str)
-    return(num_as_str)
+    if re.search("\\.", num_as_str):
+        num_as_str = re.sub("0*$", "", num_as_str)
+        num_as_str = re.sub("\\.$", "", num_as_str)
+    return num_as_str
 
-def _remove_closest(x, y, exclude_endpoints = True, **kwargs):
+
+def _remove_closest(x, y, exclude_endpoints=True, **kwargs):
     """
     Remove the elements of x that are closest to the elements of y.
     Optionally excluding the endpoints of x in the determination
-    
+
     Parameters
     ----------
-    
+
     x : 1-D numpy array
-    
+
     y : 1-D numpy array
-    
+
     exclude_endpoints : Boolean
-    
+
     Returns
     -------
-    
+
     numpy 1-D array : the elements of x after removing the values closest
         to the elements of y
     """
@@ -394,89 +403,92 @@ def _remove_closest(x, y, exclude_endpoints = True, **kwargs):
         else:
             z = x
         r = range(len(z))
-        ridx = [min(r, key = lambda i: abs(z[i] - j)) + 1 for j in y]
+        ridx = [min(r, key=lambda i: abs(z[i] - j)) + 1 for j in y]
         ridx = list(set(ridx))
         x = x.tolist()
         for index in sorted(ridx, reverse=True):
             del x[index]
         x = np.array(x)
-    return(x)
+    return x
 
-def _finalize_bins(x, pm, sig_fig = 3, **kwargs):
+
+def _finalize_bins(x, pm, sig_fig=3, **kwargs):
     """
     Orchestrator for creating bins for numeric variables
-    
+
     Parameters
     ----------
-    
+
     x : 1-D numpy array
         Preliminary bin endpoints
-        
+
     pm : 1-D numpy array
         Values with point masses
-        
+
     sig_fig : int
         Number of significant figures to use
-        
+
     Returns
     -------
-    
+
     b : 1-D numpy array
         Finalizing bin endpoints
-        
+
     bin_labels : list
         Final bin labels
-        
+
     pm_labels : list
         Final point mass labels
     """
     b = _remove_closest(x, pm, **kwargs)
-    b = np.unique(np.concatenate([b,pm]))
+    b = np.unique(np.concatenate([b, pm]))
     b.sort()
-    bin_labels, pm_labels = _label_constructor(b, pm, sig_fig = sig_fig, **kwargs)
-    return(b, bin_labels, pm_labels)
+    bin_labels, pm_labels = _label_constructor(
+        b, pm, sig_fig=sig_fig, **kwargs)
+    return b, bin_labels, pm_labels
 
-def _label_constructor(x, pm, sig_fig = 3, **kwargs):
+
+def _label_constructor(x, pm, sig_fig=3, **kwargs):
     """
     Create bin labels for histogramming a numeric variable
-    
+
     Parameters
     ----------
-    
+
     x : 1-D numpy array
         The cutpoints for binning
-    
+
     pm : 1-D numpy array
         The values with point masses
-        
+
     sig_fig : int
         The number of significant figures to use
-        
+
     Returns
     -------
-    
+
     bin_labels : list
         Labels for the bins
-        
+
     pm_labels : list
         Labels for the point masses
     """
     bin_labels = []
     pm_labels = []
-    x_format = [human_readable_num(i, sig_fig = sig_fig) for i in x]
+    x_format = [human_readable_num(i, sig_fig=sig_fig) for i in x]
     cntr = 0
     for i in range(len(x)):
         if x[i] in pm:
             pm_labels.append(str(i+cntr+1).zfill(2) + ": " + x_format[i])
-            cntr+=1
+            cntr += 1
         if i < len(x) - 1:
             bin_labels.append(
-                str(i + cntr +1).zfill(2) +
+                str(i + cntr + 1).zfill(2) +
                 ': ' +
-                ('[' if i==0 and (x[i] not in pm) else '(') +
+                ('[' if i == 0 and (x[i] not in pm) else '(') +
                 x_format[i] +
                 ', ' +
                 x_format[i+1] +
                 (']' if (x[i+1] not in pm) else ')')
             )
-    return(bin_labels, pm_labels)
+    return bin_labels, pm_labels
