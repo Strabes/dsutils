@@ -21,5 +21,5 @@ def test_outlier_percentile_capper(example_data):
         'y' : example_data.y.values
         })
     res2 = OutlierPercentileCapper(
-        x='x',lower = 0.01, upper = 0.99).fit_transform(example_data)
+        variables='x',lower = 0.01, upper = 0.99).fit_transform(example_data)
     assert res.equals(res2)

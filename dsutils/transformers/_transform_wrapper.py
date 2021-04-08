@@ -24,31 +24,26 @@ class TransformWrapper(BaseTransformer):
             A function with a single argument, a pandas.DataFrame,
             and which returns a pandas.DataFrame
         """
-        self._func = func
-        self._kwargs = kwargs
-        self._fitted = False
+        self.func = func
+        self.kwargs = kwargs
+        self.fitted = False
 
-    def fit(self, df):
+    def fit(self, X, y = None):
         """Fit method
         Parameters
         ----------
-        df : pandas.DataFrame
+        X : pandas.DataFrame
         """
-        self._fitted = True
+        self.fitted = True
 
-    def transform(self, df, in_place=False):
+    def transform(self, X):
         """Transform method
         Parameters
         ----------
-        df : pandas.DataFrame
-
-        in_place : Boolean
-          default : False
+        X : pandas.DataFrame
         """
-        if not self._fitted:
+        if not self.fitted:
             raise Exception("Transformation not fit yet")
-        if not in_place:
-            df = df.copy()
-        df = self._func(df, **self._kwargs)
-        if not in_place:
-            return(df)
+        X = X.copy()
+        X = self.func(X, **self.kwargs)
+        return(X)

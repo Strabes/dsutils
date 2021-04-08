@@ -5,28 +5,27 @@ from ._base import BaseTransformer
 
 class DateComponents(BaseTransformer):
 
-    def __init__(self, x : Union[str,list],
+    def __init__(self, variables : Union[str,list],
                  components = {'year':'_YEAR','month':'_MONTH','day':'_DAY'}):
-        super(DateComponents, self).__init__(x)
-        self._components = components
+        super(DateComponents, self).__init__(variables)
+        self.components = components
         
-    def fit(self, df):
-        if self._fitted: return
-        self._fitted = True
+    def fit(self, X, y = None):
+        if self.fitted: return
+        self.fitted = True
         
-    def transform(self, df, in_place = False):
-        if not self._fitted:
+    def transform(self, X):
+        if not self.fitted:
             raise Exception("Transformation not fit yet")
-        if not in_place:
-            df = df.copy()
-        for z in self._x:
-            if 'year' in self._components.keys():
-                pf = self._components['year']
-                df.loc[:,z+pf] = df[z].dt.year
-            if 'month' in self._components.keys():
-                pf = self._components['month']
-                df.loc[:,z+pf] = df[z].dt.month
-            if 'day' in self._components.keys():
-                pf = self._components['day']
-                df.loc[:,z+pf] = df[z].dt.day
-        if not in_place: return(df)
+        X = X.copy()
+        for z in self.variables:
+            if 'year' in self.components.keys():
+                pf = self.components['year']
+                X.loc[:,z+pf] = X[z].dt.year
+            if 'month' in self.components.keys():
+                pf = self.components['month']
+                X.loc[:,z+pf] = X[z].dt.month
+            if 'day' in self.components.keys():
+                pf = self.components['day']
+                X.loc[:,z+pf] = X[z].dt.day
+        return X
