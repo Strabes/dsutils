@@ -15,7 +15,8 @@ class TransformWrapper(BaseTransformer):
     from the data. This class implements fit, transform
     and fit_transform methods for the function.
     """
-    def __init__(self, func, **kwargs):
+
+    def __init__(self, func):
         """
         Parameters
         ----------
@@ -25,7 +26,6 @@ class TransformWrapper(BaseTransformer):
             and which returns a pandas.DataFrame
         """
         self.func = func
-        self.kwargs = kwargs
         self.fitted = False
 
     def fit(self, X, y = None):
@@ -45,5 +45,5 @@ class TransformWrapper(BaseTransformer):
         if not self.fitted:
             raise Exception("Transformation not fit yet")
         X = X.copy()
-        X = self.func(X, **self.kwargs)
+        X = self.func(X)
         return(X)
