@@ -9,7 +9,7 @@ class RegexReplacer(BaseTransformer):
     """
     Replace Regex Expressions
     """
-    def __init__(self, x : Union[str,list], pattern : str,
+    def __init__(self, variables : Union[str,list], pattern : str,
                  replacement = '', case_sensitive = False, strip = True,
                  replacement_type = 'pattern'):
         """
@@ -17,7 +17,7 @@ class RegexReplacer(BaseTransformer):
         
         Parameters
         ----------
-        x : str or list
+        variables : str or list
             Variable(s) to transform
         
         pattern : str
@@ -36,40 +36,39 @@ class RegexReplacer(BaseTransformer):
             'pattern' - replace just the matched pattern
             'all' - replace the entire string when match is found
         """
-        super(RegexReplacer, self).__init__(x)
-        self._pattern = pattern
-        self._replacement = replacement
-        self._case_sensitive = case_sensitive
-        self._strip = strip
-        self._replacement_type = replacement_type
+        super(RegexReplacer, self).__init__(variables)
+        self.pattern = pattern
+        self.replacement = replacement
+        self.case_sensitive = case_sensitive
+        self.strip = strip
+        self.replacement_type = replacement_type
         
-    def fit(self, df):
-        self._fitted = True
+    def fit(self, X, y = None):
+        self.fitted = True
         
-    def transform(self, df, in_place = False):
+    def transform(self, X):
         """
         Transform method
         """
-        if not self._fitted:
+        if not self.fitted:
             raise Exception("Transformation not fit yet")
-        if not in_place:
-            df = df.copy()
-        for z in self._x:
-            df.loc[:,z] = df[z].map(self._replacer)
-        if not in_place: return(df)
+        X = X.copy()
+        for z in self.variables:
+            X.loc[:,z] = X[z].map(self.replacer)
+        return X
         
     def _replacer(self,x):
-        if self._replacement_type == 'pattern':
-            if self._case_sensitive:
-                s = re.sub(self._pattern,self._replacement,x)
+        if self.replacement_type == 'pattern':
+            if self.case_sensitive:
+                s = re.sub(self.pattern,self.replacement,x)
             else:
-                s = re.sub(self._pattern,self._replacement,x,flags=re.I)
-        elif self._replacement_type == 'all':
-            if self._case_sensitive:
-                s = re.search(self._pattern,self._replacement,x)
+                s = re.sub(self.pattern,self.replacement,x,flags=re.I)
+        elif self.replacement_type == 'all':
+            if self.case_sensitive:
+                s = re.search(self.pattern,self.replacement,x)
             else:
-                s = re.search(self._pattern,x,flags=re.I)
-            s = x if not s else self._replacement
+                s = re.search(self.pattern,x,flags=re.I)
+            s = x if not s else self.replacement
             return(s)
         return(s)
     
