@@ -1,62 +1,60 @@
 import numpy as np
 import pandas as pd
-from typing import Union
+from typing import Union, Optional
+from sklearn.base import BaseEstimator, TransformerMixin
 
-class BaseTransformer:
+class BaseTransformer(BaseEstimator, TransformerMixin):
     """
     Base class for all transformers
     """
     
-    def __init__(self,x: Union[str,list]):
-        if isinstance(x,str): x = [x]
-        self._x = x
-        self._fitted = False
+    def __init__(self, variables: Union[str,list]):
+        if isinstance(variables,str): variables = [variables]
+        self.variables = variables
+        self.fitted = False
         
     def _reset(self):
-        self._fitted = False
+        self.fitted = False
         
     def _check_if_fit(self):
-        return(self._fitted)
+        return(self.fitted)
     
-    def _validate_x(self, df, x, dtypes):
-        if len(x) == 1:
-            self._validate_one(df, x, dtypes)
+    def _validate_variables(self, X, variables, dtypes):
+        if len(variables) == 1:
+            self._validate_one(X, variables, dtypes)
         else:
-            for z in x:
-                self._validate_one(df, z, dtypes)
+            for z in variables:
+                self._validate_one(X, z, dtypes)
                 
-    def fit_transform(self, df, in_place = False):
+    def fit_transform(self, X : pd.DataFrame, y : Optional[pd.Series] = None):
         """
         Apply fit and transform methods
         
         Parameters
         ----------
-        df : pandas DataFrame
-        in_place : boolean. Apply transformation in place to
-                 DataFrame
-        
+        X : pandas.DataFrame
+
+        y : pandas.Series
+            Optional
+
         Returns
         -------
-        If in_place is False, returns new DataFrame with transformations
-        applied.
+        pandas.DataFrame
         """
-        self.fit(df)
-        if in_place:
-            self.transform(df, in_place)
-        else:
-            return(self.transform(df, in_place))
+        self.fit(X)
+        return self.transform(X)
         
-    def _validate_one(self, df, x, dtypes):
-        if not x in df.columns:
-            raise ValueError(x + " is not a column in the DataFrame")
+    def _validate_one(self, X, variable, dtypes):
+        if not variable in X.columns:
+            raise ValueError(variable + " is not a column in the DataFrame")
         else:
-            self._validate_one_dtype(df, x, dtypes)
+            self._validate_one_dtype(X, variable, dtypes)
 
             
-    def _validate_one_dtype(self, df, x, dtypes):
-        if not df[x].dtypes in dtypes:
+    def _validate_one_dtype(self, X, variable, dtypes):
+        if not X[variable].dtypes in dtypes:
             dtypes_str = ", ".join([str(t) for t in dtypes])
             raise TypeError(
-                x + " is not one of the excepted dtypes: " + dtypes_str)
+                variable + " is not one of the excepted dtypes: " + dtypes_str)
         else:
             pass
