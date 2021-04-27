@@ -8,10 +8,12 @@ Welcome to dsutils's documentation!
 
 dsutils is a python package of data science utilities.
 
+.. automodule:: dsutils
+   :members:
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
-
 
 
 Indices and tables
@@ -19,6 +21,6 @@ Indices and tables
 
 * :ref:`genindex`
 
-.. * :ref:`modindex`
+* :ref:`modindex`
 
 * :ref:`search`

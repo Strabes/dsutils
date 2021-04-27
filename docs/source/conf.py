@@ -12,7 +12,7 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath('../../dsutils/'))
 
 
 # -- Project information -----------------------------------------------------
@@ -22,7 +22,7 @@ copyright = '2020, Greg Strabel'
 author = 'Greg Strabel'
 
 # The full version, including alpha/beta/rc tags
-release = '0.0.0'
+release = '0.0.1'
 
 
 # -- General configuration ---------------------------------------------------
@@ -33,12 +33,9 @@ release = '0.0.0'
 extensions = [
     'sphinx.ext.githubpages',
     'sphinx.ext.autodoc',
-    'sphinxcontrib.apidoc'
+    'sphinx.ext.napoleon'
 ]
-apidoc_module_dir = '../dsutils'
-apidoc_output_dir = './build'
-apidoc_excluded_paths = ['../tests']
-apidoc_separate_modules = True
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
