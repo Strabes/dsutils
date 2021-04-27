@@ -1,0 +1,237 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>dsutils.transformers package &#8212; dsutils 0.0.1 documentation</title>
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">dsutils 0.0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">dsutils.transformers package</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="dsutils-transformers-package">
+<h1>dsutils.transformers package<a class="headerlink" href="#dsutils-transformers-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-dsutils.transformers">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-dsutils.transformers" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="dsutils.transformers.BaseTransformer">
+<em class="property">class </em><code class="sig-prename descclassname">dsutils.transformers.</code><code class="sig-name descname">BaseTransformer</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">variables</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>str<span class="p">, </span>list<span class="p">]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dsutils.transformers.BaseTransformer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">sklearn.base.BaseEstimator</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">sklearn.base.TransformerMixin</span></code></p>
+<p>Base class for all transformers</p>
+<dl class="py method">
+<dt id="dsutils.transformers.BaseTransformer.fit_transform">
+<code class="sig-name descname">fit_transform</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span><span class="p">:</span> <span class="n">pandas.core.frame.DataFrame</span></em>, <em class="sig-param"><span class="n">y</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>pandas.core.series.Series<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dsutils.transformers.BaseTransformer.fit_transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply fit and transform methods</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>pandas.DataFrame</em>) – </p></li>
+<li><p><strong>y</strong> (<em>pandas.Series</em>) – Optional</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="dsutils.transformers.CumulativePercentThresholdBinner">
+<em class="property">class </em><code class="sig-prename descclassname">dsutils.transformers.</code><code class="sig-name descname">CumulativePercentThresholdBinner</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">variables</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>str<span class="p">, </span>list<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">cum_percent</span><span class="o">=</span><span class="default_value">0.95</span></em>, <em class="sig-param"><span class="n">other_val</span><span class="o">=</span><span class="default_value">'_OTHER_'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dsutils.transformers.CumulativePercentThresholdBinner" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">dsutils.transformers._categorical_binners._CategoricalBinner</span></code></p>
+<dl class="py method">
+<dt id="dsutils.transformers.CumulativePercentThresholdBinner.fit">
+<code class="sig-name descname">fit</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em>, <em class="sig-param"><span class="n">y</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dsutils.transformers.CumulativePercentThresholdBinner.fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fit method</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>pandas.DataFrame</em>) – </p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="dsutils.transformers.DateComponents">
+<em class="property">class </em><code class="sig-prename descclassname">dsutils.transformers.</code><code class="sig-name descname">DateComponents</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">variables</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>str<span class="p">, </span>list<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">components</span><span class="o">=</span><span class="default_value">{'day': '_DAY', 'month': '_MONTH', 'year': '_YEAR'}</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dsutils.transformers.DateComponents" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">dsutils.transformers._base.BaseTransformer</span></code></p>
+<dl class="py method">
+<dt id="dsutils.transformers.DateComponents.fit">
+<code class="sig-name descname">fit</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em>, <em class="sig-param"><span class="n">y</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dsutils.transformers.DateComponents.fit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="dsutils.transformers.DateComponents.transform">
+<code class="sig-name descname">transform</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dsutils.transformers.DateComponents.transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="dsutils.transformers.MaxLevelBinner">
+<em class="property">class </em><code class="sig-prename descclassname">dsutils.transformers.</code><code class="sig-name descname">MaxLevelBinner</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">variables</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>str<span class="p">, </span>list<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">max_levels</span><span class="o">=</span><span class="default_value">20</span></em>, <em class="sig-param"><span class="n">other_val</span><span class="o">=</span><span class="default_value">'_OTHER_'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dsutils.transformers.MaxLevelBinner" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">dsutils.transformers._categorical_binners._CategoricalBinner</span></code></p>
+<dl class="py method">
+<dt id="dsutils.transformers.MaxLevelBinner.fit">
+<code class="sig-name descname">fit</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em>, <em class="sig-param"><span class="n">y</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>pandas.core.series.Series<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dsutils.transformers.MaxLevelBinner.fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fit method</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>pandas.DataFrame</em>) – </p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="dsutils.transformers.OutlierPercentileCapper">
+<em class="property">class </em><code class="sig-prename descclassname">dsutils.transformers.</code><code class="sig-name descname">OutlierPercentileCapper</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">variables</span><span class="o">=</span><span class="default_value">typing.Union[str, list]</span></em>, <em class="sig-param"><span class="n">lower</span><span class="o">=</span><span class="default_value">0.01</span></em>, <em class="sig-param"><span class="n">upper</span><span class="o">=</span><span class="default_value">0.99</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dsutils.transformers.OutlierPercentileCapper" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">dsutils.transformers._base.BaseTransformer</span></code></p>
+<dl class="py method">
+<dt id="dsutils.transformers.OutlierPercentileCapper.fit">
+<code class="sig-name descname">fit</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em>, <em class="sig-param"><span class="n">y</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dsutils.transformers.OutlierPercentileCapper.fit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="dsutils.transformers.OutlierPercentileCapper.transform">
+<code class="sig-name descname">transform</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em>, <em class="sig-param"><span class="n">y</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dsutils.transformers.OutlierPercentileCapper.transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="dsutils.transformers.PercentThresholdBinner">
+<em class="property">class </em><code class="sig-prename descclassname">dsutils.transformers.</code><code class="sig-name descname">PercentThresholdBinner</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">variables</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>str<span class="p">, </span>list<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">percent_threshold</span><span class="o">=</span><span class="default_value">0.02</span></em>, <em class="sig-param"><span class="n">other_val</span><span class="o">=</span><span class="default_value">'_OTHER_'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dsutils.transformers.PercentThresholdBinner" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">dsutils.transformers._categorical_binners._CategoricalBinner</span></code></p>
+<dl class="py method">
+<dt id="dsutils.transformers.PercentThresholdBinner.fit">
+<code class="sig-name descname">fit</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em>, <em class="sig-param"><span class="n">y</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>pandas.core.series.Series<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dsutils.transformers.PercentThresholdBinner.fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fit method</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>df</strong> (<em>pandas.DataFrame</em>) – </p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="dsutils.transformers.TransformWrapper">
+<em class="property">class </em><code class="sig-prename descclassname">dsutils.transformers.</code><code class="sig-name descname">TransformWrapper</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">func</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dsutils.transformers.TransformWrapper" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">dsutils.transformers._base.BaseTransformer</span></code></p>
+<p>Generic class for wrapping functions that
+do not have parameters that need to be learned
+from the data. This class implements fit, transform
+and fit_transform methods for the function.</p>
+<dl class="py method">
+<dt id="dsutils.transformers.TransformWrapper.fit">
+<code class="sig-name descname">fit</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em>, <em class="sig-param"><span class="n">y</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dsutils.transformers.TransformWrapper.fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fit method
+:param X:
+:type X: pandas.DataFrame</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="dsutils.transformers.TransformWrapper.transform">
+<code class="sig-name descname">transform</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dsutils.transformers.TransformWrapper.transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transform method
+:param X:
+:type X: pandas.DataFrame</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">dsutils.transformers package</a><ul>
+<li><a class="reference internal" href="#module-dsutils.transformers">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/dsutils.transformers.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">dsutils 0.0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">dsutils.transformers package</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, Greg Strabel.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.2.1.
+    </div>
+  </body>
+</html>
