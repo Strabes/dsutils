@@ -22,7 +22,7 @@ class VectorizeText(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array_like
+        X : pandas.Series
 
         y : array_like
 
@@ -39,14 +39,14 @@ class VectorizeText(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : pandas.DataFrame
+        X : pandas.Series
 
         Returns
         -------
         res_df : pandas.DataFrame
         """
-        col = X.columns.tolist()[0]
-        res = self.vectorizer.transform(X[col])
+        col = X.name
+        res = self.vectorizer.transform(X)
         res_df = pd.DataFrame(
             res.todense(),
             columns = [col + "_" + i for i in self.vectorizer.get_feature_names()])
